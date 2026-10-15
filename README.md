@@ -71,6 +71,15 @@ everything under `/manage rules` — check for **Administrator** when they run.
 Ticket and application management re-check their own staff rules. See
 [Commands](#5-commands).
 
+> **Quick start** — pick one:
+>
+> * **Easiest:** install a [pre-built release](#download) below, run it once
+>   and answer the setup prompts.
+> * **From source:** paste the single block for your OS in
+>   [§2 Setup](#2-setup-macos-linux-windows) — it downloads the code, installs
+>   everything and starts the bot. Then run `/manage setup` in Discord
+>   ([§3](#3-configure-the-bot)).
+
 ---
 
 ## Download
@@ -88,6 +97,22 @@ Pre-built native installers are attached to every GitHub release:
 | **Windows** | x64 (`amd64`)           | `Sentinel-Setup-X.Y.Z.exe`       | Run the installer; it adds the bot to your Start Menu |
 | **Windows** | ARM64 (`arm64`)         | `Sentinel-Setup-X.Y.Z-arm64.exe` | Windows on ARM (Snapdragon X, Surface Pro X, …) |
 | **Source**  | —                       | `Source code (zip)` / `Source code (tar.gz)` | For everyone who'd rather run from source |
+
+**Linux (.deb): copy & paste.** Download the `.deb` above, then paste this
+whole block into a terminal — it picks the file matching your CPU for you,
+installs it, runs the setup prompts and starts the service:
+
+```bash
+cd ~/Downloads
+sudo dpkg -i sentinel_*_"$(dpkg --print-architecture)".deb
+sudo sentinel --install
+sudo systemctl start sentinel
+```
+
+(Adjust `~/Downloads` if you saved the file elsewhere. Re-run the same block
+with a newer `.deb` to upgrade.) On macOS open the `.dmg` and drag the app
+into `/Applications`; on Windows run the Setup `.exe`. Then start the app
+once and answer the prompts — see [Run it](#4-run-it) for what to expect.
 
 Each installer is built natively on a runner of its own architecture — an arm64
 installer cannot be produced by an amd64 machine, because PyInstaller does not
@@ -174,53 +199,158 @@ Enable **Server Members Intent** in the Discord Developer Portal under
 
 ## 2. Setup (macOS, Linux, Windows)
 
-The included helper scripts create a virtualenv, install dependencies,
-**run the interactive installer** on first launch, then start the bot.
+**Copy, paste, done.** Paste the *one* block for your OS into a terminal and
+press Enter. It downloads the code, creates a virtualenv, installs the
+dependencies, runs the interactive installer and starts the bot — there is
+nothing else to run for a first install. (Using a packaged release instead?
+See [Download](#download); the prompts are the same.)
 
-| OS       | Script                 |
-|----------|------------------------|
-| macOS    | `./scripts/run_mac.sh`    |
-| Linux    | `./scripts/run_linux.sh`  |
-| Windows  | `scripts\run_windows.bat` |
+Before you paste, have these ready:
 
-The installer (`installer.py`) is also runnable on its own:
+1. A bot token: <https://discord.com/developers/applications> → your app →
+   **Bot** → **Token**. Also turn on **Server Members Intent** under
+   *Bot → Privileged Gateway Intents* (see [Requirements](#1-requirements)).
+2. In Discord, enable *Settings → Advanced → Developer Mode* so you can
+   right-click roles/channels and choose **Copy … ID** when the installer asks.
+3. The roles/channels themselves can also be set later from Discord with
+   `/manage setup` — every installer prompt except the token can be skipped
+   with Enter (see [Configure the bot](#3-configure-the-bot)).
+
+### macOS — copy & paste (Terminal)
 
 ```bash
-python3 installer.py
+git clone https://github.com/mob5824m-wq/Sentinel.git
+cd Sentinel
+./scripts/run_mac.sh
 ```
 
-It prompts for:
+No `git` or `python3` yet? macOS will offer the Command Line Tools the first
+time you run `git` — accept, wait for it to finish, then paste the block
+again. (Python also comes from <https://www.python.org/downloads/>.)
+
+### Linux — copy & paste (Terminal)
+
+On Debian / Ubuntu (including Raspberry Pi OS), paste this whole block — the
+first two lines install anything missing, the rest is the same as macOS:
+
+```bash
+sudo apt update
+sudo apt install -y git python3 python3-venv python3-pip
+git clone https://github.com/mob5824m-wq/Sentinel.git
+cd Sentinel
+./scripts/run_linux.sh
+```
+
+On another distro, install the equivalents of `git`, `python3` and the
+`venv` module with your package manager, then paste just the last three lines.
+
+### Windows — copy & paste (PowerShell)
+
+```powershell
+git clone https://github.com/mob5824m-wq/Sentinel.git
+cd Sentinel
+.\scripts\run_windows.bat
+```
+
+In **Command Prompt** the only difference is the last line, which needs no
+`.\` prefix: `scripts\run_windows.bat`.
+
+If `git` or `python` is "not recognized", paste this first, then close and
+reopen PowerShell and paste the block above again:
+
+```powershell
+winget install --id Git.Git -e
+winget install --id Python.Python.3.11 -e
+```
+
+(No `winget`? Install Git from <https://git-scm.com/download/win> and Python
+from <https://www.python.org/downloads/> — tick **Add python.exe to PATH** —
+then reopen the terminal.)
+
+### No git? Already downloaded the source `.zip`?
+
+Extract it, open a terminal *in the extracted `Sentinel` folder*, and paste
+only the last line of your OS block above (`./scripts/run_mac.sh`,
+`./scripts/run_linux.sh` or `.\scripts\run_windows.bat`). The same applies if
+you already have the folder: `cd` into it and paste that one line.
+
+### What happens next
+
+The helper script does the boring parts (virtualenv + dependencies) and then
+the interactive installer (`installer.py`) asks for:
 
 | Field             | Where to find it                                      |
 |-------------------|-------------------------------------------------------|
-| `bot_token`       | Discord Developer Portal -> your app -> Bot -> Token  |
-| `server_id`       | Optional for command sync. Enter it for the installer's single-server role settings; right-click the server icon -> Copy Server ID |
+| `bot_token`       | Discord Developer Portal -> your app -> Bot -> Token (typing is hidden; paste and press Enter) |
+| `server_id`       | Optional for command sync. Right-click the server icon -> Copy Server ID |
 | `punish_role_id`  | Right-click the role -> Copy Role ID                  |
-| `post_role_id`    | "                                                    |
+| `post_role_id`    | Right-click the role -> Copy Role ID                  |
 | `staff_role_id`   | Optional. Members with this role (and any user with admin/moderator permissions) cannot be punished. |
 | `staff_channel_id`| Right-click the channel -> Copy Channel ID (optional) |
-| `dm_user`         | y / n (default y)                                    |
+| `dm_user`         | y / n (default y)                                     |
 
-The installer writes the result to `config.json` with `0600` permissions
-on Unix so the token isn't world-readable. Re-running it preserves any
-field you skip (just press Enter).
+Press Enter on anything you don't have yet — skipped fields are left as they
+are, re-running is safe, and roles can be set afterwards with `/manage setup`.
+The installer writes `config.json` with `0600` permissions on Unix so the
+token isn't world-readable.
 
-**Manual setup** (if you'd rather do it yourself):
+The bot then starts straight away (see [Run it](#4-run-it) for the log lines
+to expect). Press **Ctrl+C** to stop it; to start it again, `cd` back into
+the `Sentinel` folder and re-paste your OS's last line — your config is kept,
+so there are no prompts.
+
+**Skip the token prompt (optional).** If `DISCORD_TOKEN` is set, the launcher
+uses it instead of asking. Paste one of these *instead of* the last line of
+your OS block, with your token between the quotes:
+
+macOS / Linux:
+
+```bash
+DISCORD_TOKEN="paste-your-token-here" ./scripts/run_linux.sh
+```
+
+(Use `./scripts/run_mac.sh` on macOS.) Windows (PowerShell):
+
+```powershell
+$env:DISCORD_TOKEN="paste-your-token-here"; .\scripts\run_windows.bat
+```
+
+### Manual setup (without the helper script)
+
+Same result, step by step. Each block is complete and pasteable as-is — run
+it from inside the `Sentinel` folder:
+
+macOS / Linux:
 
 ```bash
 python3 -m venv .venv
-# macOS / Linux
 source .venv/bin/activate
-# Windows (PowerShell)
-.venv\Scripts\Activate.ps1
-
-pip install -r requirements.txt
-python3 installer.py    # or just edit config.json by hand
-python3 bot.py
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python installer.py
+python bot.py
 ```
 
-You can also set `DISCORD_TOKEN` as an environment variable and the
-launcher will skip the token prompt.
+Windows (PowerShell):
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python installer.py
+python bot.py
+```
+
+If PowerShell refuses `Activate.ps1` ("running scripts is disabled"), paste
+this once and then re-run the activation line:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
+Windows (Command Prompt): same block, but activate with
+`.venv\Scripts\activate.bat` instead of `Activate.ps1`.
 
 ---
 
@@ -232,11 +362,28 @@ command (for tweaking things later).
 
 ### Option A — interactive installer
 
+To (re)run the installer from a source checkout, paste the block for your OS
+from inside the `Sentinel` folder. This writes `config.json` with everything
+the bot needs:
+
+macOS / Linux:
+
 ```bash
-python3 installer.py
+source .venv/bin/activate
+python installer.py
 ```
 
-This writes `config.json` with everything the bot needs.
+Windows (PowerShell):
+
+```powershell
+.venv\Scripts\Activate.ps1
+python installer.py
+```
+
+(In Command Prompt, activate with `.venv\Scripts\activate.bat` instead. If
+you never stopped the helper script, just re-pasting
+`./scripts/run_linux.sh` / `./scripts/run_mac.sh` / `.\scripts\run_windows.bat`
+works too — it re-runs the installer whenever no token is configured.)
 
 ### Option B — in-Discord `/manage setup` (easiest to change roles later)
 
@@ -487,13 +634,30 @@ right-click the server/role/channel and choose "Copy ... ID".
 
 ## 4. Run it
 
-```bash
-# macOS / Linux
-./scripts/run_mac.sh     # or run_linux.sh
+Starting again later is the same one line as setup — paste it from inside
+the `Sentinel` folder (your config is kept, so there are no prompts), or
+`sentinel` by itself for a packaged install:
 
-# Windows
-scripts\run_windows.bat
+macOS:
+
+```bash
+./scripts/run_mac.sh
 ```
+
+Linux:
+
+```bash
+./scripts/run_linux.sh
+```
+
+Windows (PowerShell):
+
+```powershell
+.\scripts\run_windows.bat
+```
+
+Windows (Command Prompt): `scripts\run_windows.bat`. Press **Ctrl+C** to stop
+the bot.
 
 You should see:
 
@@ -525,15 +689,32 @@ the command for your install:
 | How the bot is installed | Command |
 |--------------------------|---------|
 | Packaged build (`.dmg`, `.deb`, Windows Setup) | `sentinel --dashboard-token` |
-| Running from source | `python3 bot.py --dashboard-token` |
+| Running from source | `python bot.py --dashboard-token` (with the `.venv` activated, see below) |
 
 The command prints the key on a single line (and creates it if it doesn't
-exist yet). `sentinel --dashboard` then shows how the dashboard is reachable
+exist yet). From source, paste this in a second terminal (from the `Sentinel`
+folder) so the virtualenv's Python is used:
+
+macOS / Linux:
+
+```bash
+source .venv/bin/activate
+python bot.py --dashboard-token
+```
+
+Windows (PowerShell):
+
+```powershell
+.venv\Scripts\Activate.ps1
+python bot.py --dashboard-token
+```
+
+`sentinel --dashboard` then shows how the dashboard is reachable
 and what to fix if it isn't; `sentinel --duckdns` tests a DuckDNS update.
 Not sure where `config.json` lives? `sentinel --paths`
-(or `python3 bot.py --paths`) prints the resolved config, database, and log
-paths. The dashboard key is **not** the Discord bot token — pasting the bot
-token into the dashboard will not work.
+(or `python bot.py --paths`, with the `.venv` activated) prints the resolved
+config, database, and log paths. The dashboard key is **not** the Discord
+bot token — pasting the bot token into the dashboard will not work.
 
 The default listener is loopback-only; the key has access to **every server
 connected to this bot**, so treat it like a bot-owner credential. For a remote
@@ -1061,19 +1242,27 @@ To sign with `signtool`, uncomment the `signtool sign` line in
 
 ### Background service
 
-After install, the bot can be configured to start automatically:
+After install, the bot can be configured to start automatically. Paste the
+block for your OS:
+
+Linux (after `sudo dpkg -i ...`):
 
 ```bash
-# Linux (after sudo dpkg -i ...):
 sudo sentinel --install-service
 sudo systemctl start sentinel
 sudo systemctl enable sentinel
+```
 
-# macOS:
+macOS:
+
+```bash
 sudo sentinel --install-service
 launchctl load -w ~/Library/LaunchAgents/com.arena.sentinel.plist
+```
 
-# Windows (run as Administrator):
+Windows (Command Prompt, run as Administrator):
+
+```bat
 sentinel.exe --install-service
 sc start Sentinel
 ```
@@ -1117,7 +1306,7 @@ candidate).
 Print the resolved locations any time:
 
 ```bash
-sentinel --paths        # or: python3 bot.py --paths
+sentinel --paths        # or, from source with the .venv activated: python bot.py --paths
 sentinel --version      # which build is actually installed
 ```
 
@@ -1273,7 +1462,7 @@ python3 tests/test_dashboard.py      # run dashboard auth tests alone
 * **Dashboard login says "Invalid dashboard key"** — you are entering the
   wrong credential. The login key is printed by
   `sentinel --dashboard-token` (packaged build) or
-  `python3 bot.py --dashboard-token` (source) and is stored as
+  `python bot.py --dashboard-token` (source, `.venv` activated) and is stored as
   `dashboard_token` in the bot's `config.json`; the Discord **bot token**
   will not work. `--paths` shows where `config.json` is.
 * **The member never receives the DM** — they have DMs disabled or the
@@ -1328,5 +1517,8 @@ python3 tests/test_dashboard.py      # run dashboard auth tests alone
   first time to bypass Gatekeeper.
 
 ## 10. License
+
+MIT.
+# 10. License
 
 MIT.
