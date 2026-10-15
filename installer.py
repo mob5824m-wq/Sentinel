@@ -301,10 +301,10 @@ def run_installer() -> int:
 
     print(
         "\nDone. Run the bot with:\n"
-        "  ./scripts/run_mac.sh    (macOS)\n"
-        "  ./scripts/run_linux.sh  (Linux)\n"
-        "  scripts\\run_windows.bat (Windows)\n"
-        "  sentinel                (installed build)\n"
+        "  ./scripts/run_mac.sh     (macOS)\n"
+        "  ./scripts/run_linux.sh   (Linux)\n"
+        "  .\\scripts\\run_windows.bat (Windows, PowerShell; drop the .\\ in Command Prompt)\n"
+        "  sentinel                 (installed build)\n"
         "\nConfig: "
         f"{paths.config_path()}\n"
         "Data:   "
