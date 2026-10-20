@@ -2,7 +2,7 @@
 Type=Application
 Name=Sentinel
 GenericName=Discord Bot
-Comment=Discord server management bot: moderation, rules and roles
+Comment=Discord server management bot: moderation, applications and roles
 Exec=/opt/sentinel/sentinel
 Icon=sentinel
 Terminal=true

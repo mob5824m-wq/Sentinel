@@ -445,29 +445,40 @@ class CommandTreeTests(unittest.TestCase):
             "manage",
             "manage punish", "manage pardon", "manage warn", "manage warnings",
             "manage status", "manage setup", "manage fixcommands",
-            "manage rules", "manage rules publish", "manage rules disable",
-            "manage rules list",
-            "manage tickets", "manage tickets panel", "manage tickets category",
-            "manage tickets console", "manage tickets view", "manage tickets claim",
             "manage applications", "manage applications form",
             "manage applications panel", "manage applications review",
             "manage applications view", "manage applications accept",
             "manage applications decide",
-            "apply", "ticket",
+            "apply",
         ):
             self.assertIn(expected, names, f"command tree has: {sorted(names)}")
 
-    def test_only_three_commands_are_top_level(self) -> None:
-        """Three top-level commands, and each one is deliberate.
+    def test_removed_features_left_no_command_behind(self) -> None:
+        """Rules, reaction-role menus and tickets are gone from the product.
+
+        A command left registered after its handler was deleted shows up in
+        every server's autocomplete and then errors when anyone picks it, so
+        the whole surface is pinned here rather than just the wanted half.
+        """
+        names = command_names(self.payload)
+        for absent in ("ticket", "manage tickets", "manage rules"):
+            with self.subTest(absent=absent):
+                self.assertNotIn(absent, names)
+        self.assertFalse(
+            [name for name in names if "ticket" in name or "rules" in name],
+            f"leftover command names: {sorted(names)}",
+        )
+
+    def test_only_two_commands_are_top_level(self) -> None:
+        """Two top-level commands, and each one is deliberate.
 
         ``/manage`` is the whole staff surface (gated at runtime, not by
-        Discord). ``/apply`` and ``/ticket`` are the member-facing commands:
-        they open a modal/select and can read nothing back. Anything else
-        landing at the top level would show up in every server's command list,
-        so this pins the three.
+        Discord). ``/apply`` is the member-facing command: it opens a modal and
+        can read nothing back. Anything else landing at the top level would
+        show up in every server's command list, so this pins the two.
         """
         self.assertEqual(
-            sorted(cmd["name"] for cmd in self.payload), ["apply", "manage", "ticket"],
+            sorted(cmd["name"] for cmd in self.payload), ["apply", "manage"],
             "a stray top-level command would double the bot's Discord footprint",
         )
 
@@ -479,9 +490,9 @@ class CommandTreeTests(unittest.TestCase):
         holders who lack that permission - the exact members the server wants
         moderating. So every command is visible to everyone in the server and
         each handler re-checks when it runs: the staff role for moderation
-        (tests/test_warnings.py), *Administrator* for setup/fixcommands/rules
-        (``test_admin_commands_refuse_non_admins``), and the ticket/application
-        staff rules (tests/test_tickets.py, test_applications.py).
+        (tests/test_warnings.py), *Administrator* for setup/fixcommands
+        (``test_admin_commands_refuse_non_admins``), and the application staff
+        rules (tests/test_applications.py).
         """
         self.assertIsNone(
             self.meta["apply"]["default_member_permissions"],
@@ -541,15 +552,15 @@ class CommandTreeTests(unittest.TestCase):
             [
                 ["get-global", None],
                 ["clear", None], ["sync", None, 0],   # duplicates deleted
-                # Three top-level commands per guild upload: /manage (staff),
-                # /apply and /ticket (every member).
-                ["copy", 101], ["sync", 101, 3],      # configured server_id
-                ["copy", 202], ["sync", 202, 3],      # other connected guild
-                ["copy", 303], ["sync", 303, 3],      # joined after startup
+                # Two top-level commands per guild upload: /manage (staff) and
+                # /apply (every member).
+                ["copy", 101], ["sync", 101, 2],      # configured server_id
+                ["copy", 202], ["sync", 202, 2],      # other connected guild
+                ["copy", 303], ["sync", 303, 2],      # joined after startup
                 # /manage fixcommands: fresh duplicate found and removed ...
                 ["get-global", None], ["clear", None], ["sync", None, 0],
                 # ... and this server's copy re-uploaded, then verified empty.
-                ["sync", 202, 3], ["get-global", None],
+                ["sync", 202, 2], ["get-global", None],
             ],
             "unexpected command registration traffic",
         )
@@ -562,7 +573,7 @@ class CommandTreeTests(unittest.TestCase):
     def test_duplicate_cleanup_keeps_the_local_tree_intact(self) -> None:
         # Guild copies are made from the local global tree, so emptying the
         # Discord-side registry must not remove the commands locally.
-        self.assertEqual(self.sync["local_commands"], ["apply", "manage", "ticket"])
+        self.assertEqual(self.sync["local_commands"], ["apply", "manage"])
 
     def test_fixcommands_removes_duplicates_and_reports_it(self) -> None:
         reply = "\n".join(self.sync["fix_reply"])

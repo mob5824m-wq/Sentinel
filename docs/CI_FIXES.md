@@ -531,10 +531,10 @@ error instead of a verdict.
 Every leg of `build.yml` and of the reusable `build-installers.yml` runs
 `python -m pytest tests`, which covers runtime path resolution (fixes 12 and
 14), the version plumbing (fix 13), the slash-command definitions (fix 15),
-the reaction-role menus and the merge/tag release automation (fix 16), the
-per-architecture build plumbing (fix 17), the glibc floor (fix 18) and the
-test-failure annotations (fix 19). The suites are plain `unittest`, so they
-also run standalone: `python tests/test_paths.py`.
+the merge/tag release automation (fix 16), the per-architecture build plumbing
+(fix 17), the glibc floor (fix 18) and the test-failure annotations (fix 19).
+The suites are plain `unittest`, so they also run standalone:
+`python tests/test_paths.py`.
 
 ## Other notes
 

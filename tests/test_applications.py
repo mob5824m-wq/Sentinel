@@ -60,7 +60,7 @@ def _permissions(**flags) -> SimpleNamespace:
 
 
 class _FakeRole:
-    """Hashable enough for permission checks (see tests/test_tickets.py)."""
+    """Hashable enough for permission checks (roles are compared by id)."""
 
     def __init__(self, role_id: int, name: str = "role") -> None:
         self.id = role_id
@@ -263,7 +263,11 @@ def _modal_values(answers: list[str]) -> dict:
 
 
 class _IsolatedStoreMixin:
-    """Temporary database + stubbed config writer (see tests/test_tickets.py)."""
+    """Temporary database + stubbed config writer.
+
+    Redirects ``SENTINEL_DATA`` before the modules read it, so no test can
+    write into the developer's real config or database.
+    """
 
     def _isolate(self) -> None:
         self.home = tempfile.TemporaryDirectory(prefix="pm-applications-test-")

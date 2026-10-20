@@ -1,9 +1,9 @@
 """Generic SQLite access shared by :mod:`bot` and the feature modules.
 
-Sentinel's per-feature modules (:mod:`tickets`, :mod:`applications`) keep their
-own tables but must not import :mod:`bot` to reach the database helpers:
-``bot.py`` imports those modules to register their cogs, so an import back into
-``bot`` would be circular.
+Sentinel's per-feature modules (:mod:`applications`) keep their own tables but
+must not import :mod:`bot` to reach the database helpers: ``bot.py`` imports
+those modules to register their cogs, so an import back into ``bot`` would be
+circular.
 
 The helpers here are deliberately tiny and identical to the ones ``bot.py``
 used before they moved: one connection per statement, opened ``with

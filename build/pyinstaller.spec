@@ -2,9 +2,8 @@
 """
 PyInstaller spec for the Sentinel.
 
-Builds `bot.py` and its imported modules (`rules.py`, `reaction_roles.py`,
-`tickets.py`, `applications.py`, `settings.py`, `store.py`, `dashboard.py`,
-`duckdns.py`), plus
+Builds `bot.py` and its imported modules (`applications.py`, `settings.py`,
+`store.py`, `legacy_cleanup.py`, `dashboard.py`, `duckdns.py`), plus
 its companion `installer.py` and dashboard UI, into a self-contained binary:
 
   Linux:   dist/sentinel/sentinel
@@ -153,22 +152,18 @@ a = Analysis(
         # installer.py is bundled as a data file (not analysed), so list the
         # module explicitly to be safe.
         'paths',
-        # The shared /manage command group lives in its own module so
-        # bot.py and rules.py can both import it.
+        # The shared /manage command group lives in its own module so a
+        # feature module can attach a sub-group without importing bot.py.
         'command_tree',
-        # Rules-Markdown renderer used by the dashboard's rules preview.
-        'discord_markdown',
         # DuckDNS record updater (keeps a dynamic-DNS name pointed here).
         'duckdns',
-        'rules',
-        # Reaction-role menus (dashboard-published posts + the reaction cog).
-        'reaction_roles',
-        # Shared SQLite helpers and per-guild config lookups (bot.py, tickets.py
-        # and applications.py all import them).
+        # One-time cleanup of what the removed rules / reaction-role / ticket
+        # features left in config.json, SQLite and the server's channels.
+        'legacy_cleanup',
+        # Shared SQLite helpers and per-guild config lookups (bot.py and
+        # applications.py both import them).
         'store',
         'settings',
-        # Ticket system: panel buttons, private threads/channels, claim/close.
-        'tickets',
         # Application forms, panels and decisions.
         'applications',
         # installer.py is bundled as a data file; import it via importlib.

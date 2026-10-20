@@ -8,8 +8,6 @@
   "dm_user": true,
   "token": "",
   "guilds": {},
-  "rules": {},
-  "tickets": {},
   "applications": {},
   "dashboard_enabled": true,
   "dashboard_host": "127.0.0.1",

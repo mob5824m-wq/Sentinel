@@ -20,7 +20,7 @@ ShowUninstDetails hide
 
 !define APPNAME "Sentinel"
 !define COMPANYNAME "Arena"
-!define DESCRIPTION "Discord server management bot: moderation, rules, roles and a web dashboard."
+!define DESCRIPTION "Discord server management bot: moderation, applications, roles and a web dashboard."
 
 !ifndef VERSION
     ; Only reached when makensis is run by hand: build_windows.bat always
