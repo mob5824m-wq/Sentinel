@@ -1,9 +1,9 @@
 """Per-guild configuration lookups, shared by every Sentinel module.
 
 These helpers used to live in ``bot.py``. They moved here so the feature
-modules (:mod:`tickets`, :mod:`applications`, :mod:`rules`, ...) can resolve a
-guild's staff role, notification channel and DM preference without importing
-``bot`` — which imports them, so that import would be circular.
+modules (:mod:`applications`, ...) can resolve a guild's staff role,
+notification channel and DM preference without importing ``bot`` — which
+imports them, so that import would be circular.
 
 They are pure functions over the config dict: nothing here touches Discord or
 the database, which is also what makes them trivial to test. ``bot.py``

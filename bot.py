@@ -10,24 +10,22 @@ Everything is reached through one slash-command group, ``/manage``:
     /manage status      server config, active punishments, member history
     /manage setup       configure roles, staff channel and DMs (admins)
     /manage fixcommands clean up duplicated slash commands (admins)
-    /manage rules ...   publish rule sets and their acceptance role (admins)
-    /manage tickets panel      set the options and publish the panel (admins)
-    /manage tickets category   list / add / edit / remove a panel button (admins)
-    /manage tickets console    work the ticket queue (staff)
     /manage applications form    list / create / edit / delete a form (admins)
     /manage applications panel   publish an Apply panel (admins)
     /manage applications review  read submissions and decide (staff)
     /apply              fill in an application form (every member)
-    /ticket             open a ticket (every member)
 
-Members open tickets and submit applications through the buttons on panels
-staff published, or with those two member commands; they can never list, view
-or edit anybody's ticket or application. Moderation itself is staff-role-only:
-punish, pardon, warn, warnings and status all require the server's configured
-staff role (administrators also qualify), re-checked on every call. Its
-authenticated server-side web dashboard manages connected servers, moderation,
-warnings, the rules post, reaction-role menus, tickets, applications,
-configuration and history.
+Members submit applications through the buttons on panels staff published, or
+with that member command; they can never list, view or edit anybody's
+application. Moderation itself is staff-role-only: punish, pardon, warn,
+warnings and status all require the server's configured staff role
+(administrators also qualify), re-checked on every call. Its authenticated
+server-side web dashboard manages connected servers, moderation, warnings,
+applications, configuration and history.
+
+Rules posts, reaction-role menus and tickets used to live here too and have
+been removed. :mod:`legacy_cleanup` deletes the messages those features left
+in a server and prunes their config sections on first start after upgrading.
 """
 
 from __future__ import annotations
@@ -52,11 +50,10 @@ from discord.ext import commands, tasks
 
 import paths
 import command_tree
+import legacy_cleanup
 import store
 import duckdns
 from dashboard import DashboardServer, ensure_dashboard_token
-from reaction_roles import ReactionRolesCog
-from rules import RulesMixin
 from settings import (
     config_path,
     get_guild_config,
@@ -72,7 +69,6 @@ from applications import (
     ApplicationsMixin,
     route_application_interaction,
 )
-from tickets import TicketCog, TicketMixin, route_ticket_interaction
 
 
 # --------------------------------------------------------------------------- #
@@ -184,43 +180,6 @@ CREATE TABLE IF NOT EXISTS warnings (
 CREATE INDEX IF NOT EXISTS idx_warnings_user
     ON warnings (guild_id, user_id, created_at DESC);
 
--- Tickets (see tickets.py). One row per opened ticket, in either of the two
--- shapes the module supports: a private thread under the panel channel
--- (`mode = 'thread'`, thread_id set) or its own private channel
--- (`mode = 'channel'`, channel_id + thread_id both point at that channel).
---
--- The row is the record of truth for state, not the Discord channel: a thread
--- can be archived, renamed or deleted by hand, and the dashboard still has to
--- list what was opened, who claimed it and how it ended.
-CREATE TABLE IF NOT EXISTS tickets (
-    id             INTEGER PRIMARY KEY AUTOINCREMENT,
-    guild_id       INTEGER NOT NULL,
-    number         INTEGER NOT NULL,      -- per-guild ticket number (#1, #2, ...)
-    user_id        INTEGER NOT NULL,      -- the member who opened it
-    category_id    TEXT NOT NULL,         -- panel category id (tickets.py)
-    category_label TEXT NOT NULL,
-    mode           TEXT NOT NULL,         -- 'thread' or 'channel'
-    channel_id     INTEGER,               -- container: panel channel or category
-    thread_id      INTEGER,               -- thread / ticket channel itself
-    status         TEXT NOT NULL DEFAULT 'open',  -- open | claimed | closed
-    claimed_by     INTEGER,
-    claimed_at     TEXT,
-    subject        TEXT,
-    log_channel_id INTEGER,               -- where staff were notified
-    log_message_id INTEGER,               -- that notice, kept in sync by claim/close
-    control_message_id INTEGER,           -- in-ticket message with the buttons
-    created_at     TEXT NOT NULL,
-    closed_at      TEXT,
-    closed_by      INTEGER,
-    close_reason   TEXT
-);
-CREATE INDEX IF NOT EXISTS idx_tickets_guild
-    ON tickets (guild_id, status, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_tickets_user
-    ON tickets (guild_id, user_id);
-CREATE INDEX IF NOT EXISTS idx_tickets_thread
-    ON tickets (thread_id);
-
 -- Applications (see applications.py). `answers` is a JSON list of
 -- {"question": str, "answer": str} in the order the questions were asked, so a
 -- submission stays readable after the form it answered has been edited or
@@ -296,10 +255,10 @@ def init_db() -> None:
     logger.info("Database initialised at %s", DB_PATH)
 
 
-# The three helpers below now live in store.py so that tickets.py and
-# applications.py can use them without importing this module (they are
-# imported *by* it). They are re-exported here because the dashboard is built
-# with these callables and tests reach for bot.db_execute.
+# The three helpers below now live in store.py so that applications.py can use
+# them without importing this module (it is imported *by* this one). They are
+# re-exported here because the dashboard is built with these callables and
+# tests reach for bot.db_execute.
 db_execute = store.db_execute
 db_fetchall = store.db_fetchall
 db_fetchone = store.db_fetchone
@@ -452,9 +411,6 @@ DEFAULT_CONFIG: dict = {
     # --- legacy / shared ---
     "token": "",
     "guilds": {},
-    "rules": {},              # per-guild published rules + acceptance role
-    "reaction_roles": {},     # per-guild reaction-role menus (dashboard-published)
-    "tickets": {},            # per-guild ticket panels, categories and settings
     "applications": {},       # per-guild application forms and their panels
     "dashboard_enabled": True,
     "dashboard_host": "127.0.0.1",
@@ -478,9 +434,9 @@ DEFAULT_CONFIG: dict = {
 
 
 # config_path() and save_config() live in settings.py too, for the same reason
-# as the lookups above: the feature modules save the config they own (ticket
-# panels, application forms) and must not import bot.py to do it. They are
-# imported at the top of this file, so `bot.save_config` still resolves.
+# as the lookups above: the feature modules save the config they own
+# (application forms) and must not import bot.py to do it. They are imported at
+# the top of this file, so `bot.save_config` still resolves.
 # load_config stays here: it falls back to DEFAULT_CONFIG, which this module
 # owns.
 
@@ -528,10 +484,10 @@ def load_config() -> dict:
 
 
 # get_guild_config / get_staff_role_id / get_staff_channel_id / should_dm_user /
-# is_protected_member live in settings.py: the tickets and applications modules
-# need them too, and importing them from here would be circular. They are
-# imported at the top of this file, so `bot.get_guild_config(...)` and every
-# call site below are unchanged.
+# is_protected_member live in settings.py: the applications module needs them
+# too, and importing them from here would be circular. They are imported at the
+# top of this file, so `bot.get_guild_config(...)` and every call site below
+# are unchanged.
 
 
 def resolve_token(cfg: dict) -> Optional[str]:
@@ -618,7 +574,8 @@ def format_duration(seconds: int) -> str:
 intents = discord.Intents.default()
 intents.members = True       # required to read/modify members
 intents.guilds = True
-intents.reactions = True     # rules acceptance / reaction-role events
+# No reactions intent: the rules acceptance gate and the reaction-role menus
+# were the only consumers, and both features have been removed.
 
 
 class SentinelBot(commands.Bot):
@@ -857,6 +814,15 @@ class SentinelBot(commands.Bot):
         logger.info("Logged in as %s (id=%s)", self.user, self.user.id)
         logger.info("Connected to %d guild(s).", len(self.guilds))
         await self._sync_connected_guilds()
+        # One-time tidy-up of what the removed rules / reaction-role / ticket
+        # features left behind. Runs here rather than in setup_hook because it
+        # needs the guilds (and their channels) to be in cache to delete the
+        # messages it was told about. Idempotent: on_ready can fire again on a
+        # reconnect, and by then the config sections it reads are gone.
+        try:
+            await legacy_cleanup.run_cleanup(self)
+        except Exception:
+            logger.exception("Legacy cleanup failed; the bot will keep running.")
         await self.process_due_punishments()
 
     async def on_guild_join(self, guild: discord.Guild) -> None:
@@ -1345,19 +1311,18 @@ bot = SentinelBot(load_config())
 
 
 # ---- A single shared Cog holds all slash commands. --------------------- #
-class SentinelCog(RulesMixin, TicketMixin, ApplicationsMixin, commands.Cog):
+class SentinelCog(ApplicationsMixin, commands.Cog):
     """Every slash command, under the shared ``/manage`` group.
 
-    It also mixes in :class:`rules.RulesMixin`, :class:`tickets.TicketMixin` and
-    :class:`applications.ApplicationsMixin`, because those commands are children
-    of the same group: a nested group is registered - and its callbacks bound -
-    by the cog that owns the top-level command, so they cannot be cogs of their
-    own. The mixins' helpers expect ``bot`` and ``_save_config`` (each is
-    normally constructed with them); this cog is the one Discord sees.
+    It also mixes in :class:`applications.ApplicationsMixin`, because those
+    commands are children of the same group: a nested group is registered - and
+    its callbacks bound - by the cog that owns the top-level command, so they
+    cannot be cogs of their own. The mixin's helpers expect ``bot`` and
+    ``_save_config`` (it is normally constructed with them); this cog is the one
+    Discord sees.
 
-    ``/apply`` and ``/ticket`` are the exceptions: they are *top-level*
-    commands, so they live in :class:`applications.ApplicationsCog` and
-    :class:`tickets.TicketCog`.
+    ``/apply`` is the exception: it is a *top-level* command, so it lives in
+    :class:`applications.ApplicationsCog`.
     """
 
     def __init__(self, bot_: SentinelBot) -> None:
@@ -1381,9 +1346,9 @@ class SentinelCog(RulesMixin, TicketMixin, ApplicationsMixin, commands.Cog):
         * moderation (punish, pardon, warn, warnings, status) requires the
           configured staff role or Administrator
           (:meth:`_moderation_denial`);
-        * ``setup``, ``fixcommands`` and the ``rules`` commands require
-          Administrator (:func:`command_tree.is_administrator`);
-        * the ticket and application commands re-check their own staff rules.
+        * ``setup`` and ``fixcommands`` require Administrator
+          (:func:`command_tree.is_administrator`);
+        * the application commands re-check their own staff rules.
 
         A server that would rather keep the group hidden from members can
         restrict it (or individual commands) in Server Settings → Integrations;
@@ -1397,28 +1362,26 @@ class SentinelCog(RulesMixin, TicketMixin, ApplicationsMixin, commands.Cog):
 
     # ---- Buttons, selects and modals ----------------------------------- #
     # Panels and review messages are published as components with
-    # self-describing custom ids ("sentinel:tk:..." / "sentinel:ap:...") and
-    # handled here instead of through registered views. That is what keeps a
-    # button working after a restart, or after the server changed its ticket
-    # categories: nothing has to be re-registered, and an old panel resolves
-    # against the current configuration (or explains that it is stale).
+    # self-describing custom ids ("sentinel:ap:...") and handled here instead
+    # of through registered views. That is what keeps a button working after a
+    # restart, or after the server changed its forms: nothing has to be
+    # re-registered, and an old panel resolves against the current
+    # configuration (or explains that it is stale).
     #
     # discord.py dispatches "on_interaction" for every interaction after its
     # own routing, so this listener is additive: slash commands still reach the
-    # tree. Each router answers only for its own prefixes.
+    # tree. The router answers only for its own prefix.
     @commands.Cog.listener("on_interaction")
     async def on_component_interaction(
         self, interaction: discord.Interaction
     ) -> None:
-        if await route_ticket_interaction(self.bot, interaction):
-            return
         await route_application_interaction(self.bot, interaction)
 
     # ---- Every command hangs off the shared /manage group -------------- #
-    # The group lives in command_tree.py because rules.py attaches its
-    # /manage rules sub-group to it. Naming it here is what makes this cog
-    # the one that registers /manage with Discord - and therefore the cog
-    # every callback below binds to.
+    # The group lives in its own module (command_tree.py) so that a feature
+    # module can attach a sub-group to it without importing this one. Naming it
+    # here is what makes this cog the one that registers /manage with Discord -
+    # and therefore the cog every callback below binds to.
     manage_group = command_tree.manage_group
 
     # NOTE: Discord rejects the *entire* command list (HTTP 400, code 50035)
@@ -2220,19 +2183,14 @@ class SentinelCog(RulesMixin, TicketMixin, ApplicationsMixin, commands.Cog):
 # tree has the commands by the time it syncs).
 async def _register_cog() -> None:
     if bot.get_cog("SentinelCog") is None:
-        # One cog owns /manage: the rules sub-group from RulesMixin (with its
-        # rules-acceptance reaction listeners), the ticket sub-group from
-        # TicketMixin, the application sub-group from ApplicationsMixin, and
-        # the component routing they share.
+        # One cog owns /manage: the application sub-group from
+        # ApplicationsMixin, plus the component routing it shares with the
+        # moderation commands defined below it.
         await bot.add_cog(SentinelCog(bot))
-    if bot.get_cog("ReactionRolesCog") is None:
-        await bot.add_cog(ReactionRolesCog(bot))
     if bot.get_cog("ApplicationsCog") is None:
-        # /apply and /ticket: the two member-facing commands, published as
-        # top-level commands of their own.
+        # /apply: the member-facing command, published as a top-level command
+        # of its own.
         await bot.add_cog(ApplicationsCog(bot))
-    if bot.get_cog("TicketCog") is None:
-        await bot.add_cog(TicketCog(bot))
 
 
 # --------------------------------------------------------------------------- #
@@ -2322,6 +2280,13 @@ SentinelBot.setup_hook = setup_hook  # type: ignore[assignment]
 def main() -> int:
     _log_path_notes()
     init_db()
+    # The ticket system is gone, so its table is dropped here rather than in
+    # init_db(): SCHEMA no longer creates it, and this is a one-way migration
+    # that belongs with the other removed-feature cleanup. It runs before login
+    # so the database is tidy even if the token turns out to be bad.
+    if legacy_cleanup.drop_tickets_table():
+        logger.info("Dropped the %s table left by the removed ticket system.",
+                    legacy_cleanup.TICKETS_TABLE)
     token = resolve_token(bot.config)
     if not token:
         logger.error(
@@ -2752,8 +2717,8 @@ def _service_install_windows() -> int:
                         "DisplayName", "Sentinel"], check=True)
         subprocess.run([nssm, "set", "Sentinel",
                         "Description",
-                        "Discord server management bot: moderation, rules, "
-                        "reaction roles and a web dashboard."],
+                        "Discord server management bot: moderation, "
+                        "applications and a web dashboard."],
                        check=True)
         subprocess.run([nssm, "set", "Sentinel",
                         "Start", "SERVICE_AUTO_START"], check=True)

@@ -128,7 +128,7 @@ class ApplicationError(Exception):
 
 
 # --------------------------------------------------------------------------- #
-# Small helpers (kept in step with tickets.py on purpose)
+# Small helpers
 # --------------------------------------------------------------------------- #
 def new_form_id() -> str:
     """Return a short unique id for an application form."""
@@ -413,10 +413,10 @@ def is_application_staff(
 ) -> bool:
     """Whether this member may read and decide applications.
 
-    Same definition of staff as the ticket system: administrator, *Manage
-    Server* / *Moderate Members*, the configured staff role, or the role a form
-    names as its reviewer. It is re-checked on every button, command and
-    dashboard route rather than trusting the command's visibility.
+    Staff means: administrator, *Manage Server* / *Moderate Members*, the
+    configured staff role, or the role a form names as its reviewer. It is
+    re-checked on every button, command and dashboard route rather than
+    trusting the command's visibility.
     """
     if member is None or getattr(member, "bot", False):
         return False
@@ -1141,7 +1141,13 @@ async def _respond(
 
 
 async def _send_modal(interaction: discord.Interaction, modal: discord.ui.Modal) -> None:
-    """Show a modal, or explain why it could not be shown (see tickets.py)."""
+    """Show a modal, or explain why it could not be shown.
+
+    A modal can only answer an interaction that has not been answered yet, and
+    it fails outright if the interaction is older than Discord's window — so
+    the failure is reported to the member instead of surfacing as a button that
+    silently does nothing.
+    """
     try:
         await interaction.response.send_modal(modal)
     except (discord.InteractionResponded, discord.HTTPException) as exc:
@@ -1192,8 +1198,9 @@ async def route_application_interaction(
 class ApplicationsMixin:
     """``/manage applications`` — the staff half of the application system.
 
-    Mixed into the cog that owns the shared ``/manage`` group, like
-    :class:`rules.RulesMixin`. ``/apply`` itself is registered by
+    Mixed into the cog that owns the shared ``/manage`` group, because a nested
+    group is registered — and its callbacks bound — by the cog that owns the
+    top-level command. ``/apply`` itself is registered by
     :class:`ApplicationsCog` (see below), because a top-level command belongs
     to a cog of its own.
     """
@@ -1621,8 +1628,8 @@ class ApplicationsMixin:
     ) -> None:
         """Dispatch one of this module's buttons, selects or modal submits.
 
-        Named after the module: the shared cog also mixes in the tickets
-        handlers, and a shared method name would shadow one of the two.
+        Named after the module so that it cannot collide with a handler of the
+        same name on another mixin of the shared cog.
         """
         if interaction.guild is None:
             await _respond(interaction, "Applications only work inside a server.")

@@ -84,7 +84,7 @@
     .page.active { display: block; }
     @keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
     .grid { display: grid; gap: 16px; }
-    .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 18px; }
+    .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 18px; }
     .stat-card, .card { border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(145deg, rgba(28,31,36,.94), rgba(21,23,27,.94)); box-shadow: 0 10px 34px rgba(0,0,0,.12); }
     .stat-card { min-height: 122px; padding: 18px 19px; }
     .stat-head { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 12px; font-weight: 620; }
@@ -152,62 +152,6 @@
     .inline-status.disabled .status-icon { background: rgba(244,189,80,.1); color: var(--yellow); }
     .inline-status strong { display: block; font-size: 12px; }
     .inline-status span { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
-    .rules-top { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(250px, .7fr); gap: 16px; align-items: start; }
-    .rules-tip { padding: 16px; border: 1px solid rgba(240,166,60,.18); border-radius: 13px; background: rgba(240,166,60,.06); color: #f7dcb0; font-size: 11px; line-height: 1.6; }
-    .rules-tip strong { display: block; margin-bottom: 6px; color: #ffe3b8; font-size: 12px; }
-    .rules-editor { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
-    .reaction-subhead { margin-top: 28px; }
-    .reaction-entries { display: grid; gap: 8px; }
-    .reaction-entry { display: grid; grid-template-columns: 82px minmax(0, 1fr) 128px auto; gap: 8px; align-items: center; }
-    .reaction-entry .reaction-emoji { padding: 8px; font-size: 18px; text-align: center; }
-    .reaction-entry .reaction-action { padding: 8px 10px; font-size: 11.5px; }
-    .reaction-action-note { color: var(--muted); font-size: 10px; }
-    .reaction-entry-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
-    .reaction-quick { display: inline-flex; flex-wrap: wrap; gap: 4px; }
-    .reaction-quick button { min-width: 31px; min-height: 29px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.03); font-size: 14px; line-height: 1; }
-    .reaction-quick button:hover { border-color: rgba(240,166,60,.35); background: rgba(240,166,60,.09); }
-    .reaction-legend { display: grid; gap: 6px; margin-top: 12px; }
-    .reaction-legend-row { display: flex; align-items: center; gap: 9px; color: var(--soft); font-size: 11px; }
-    .reaction-legend-emoji { min-width: 40px; font-size: 16px; text-align: center; }
-    .reaction-legend .legend-empty { color: var(--muted); font-size: 11px; }
-    .reaction-note { margin-top: 10px; color: var(--muted); font-size: 11px; line-height: 1.5; }
-    .post-row { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.02); }
-    .post-row + .post-row { margin-top: 9px; }
-    .post-main { flex: 1 1 340px; min-width: 0; }
-    .post-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 690; }
-    .post-snippet { margin-top: 6px; color: var(--muted); font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
-    .post-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
-    .post-chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.03); color: var(--soft); font-size: 10.5px; }
-    .post-chip .chip-emoji { font-size: 13px; }
-    .post-actions { display: flex; gap: 7px; }
-    .md-toolbar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-    .md-tool { min-width: 34px; min-height: 30px; padding: 5px 9px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.03); color: var(--soft); font-size: 11px; font-weight: 700; }
-    .md-tool:hover { border-color: rgba(240,166,60,.35); background: rgba(240,166,60,.09); color: white; }
-    .md-hints { display: grid; gap: 6px; margin-top: 10px; }
-    .md-hint { display: flex; gap: 8px; padding: 9px 11px; border: 1px solid rgba(244,189,80,.2); border-radius: 10px; background: rgba(244,189,80,.055); color: #e8ce94; font-size: 11px; line-height: 1.45; }
-    .discord-post { display: grid; gap: 7px; }
-    .discord-post-content { color: var(--soft); font-size: 12px; line-height: 1.5; }
-    .discord-embed { min-height: 272px; padding: 15px 16px; border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 6px; background: #17181b; font-size: 12.5px; line-height: 1.6; overflow-wrap: anywhere; }
-    .discord-embed-title { margin-bottom: 9px; color: #fff; font-size: 14px; font-weight: 750; }
-    .discord-embed-footer { margin-top: 12px; padding-top: 9px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
-    .dm-empty { color: var(--muted); font-size: 11px; }
-    .dm-h1, .dm-h2, .dm-h3 { margin: 12px 0 6px; color: #fff; font-weight: 750; }
-    .dm-h1 { font-size: 17px; }
-    .dm-h2 { font-size: 15px; }
-    .dm-h3 { font-size: 13.5px; }
-    .discord-embed > :first-child { margin-top: 0; }
-    .dm-p { margin: 7px 0; }
-    .dm-list { margin: 7px 0; padding-left: 22px; }
-    .dm-list li { margin: 3px 0; }
-    .dm-quote { margin: 7px 0; padding: 2px 0 2px 11px; border-left: 3px solid #565c64; color: var(--soft); }
-    .dm-pre { margin: 9px 0; padding: 11px; border: 1px solid var(--line); border-radius: 8px; background: #101114; color: #cdd3da; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; white-space: pre-wrap; }
-    .dm-code { padding: 1px 5px; border-radius: 5px; background: rgba(255,255,255,.07); color: #dde2e8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
-    .dm-spoiler { border-radius: 4px; background: #23262b; color: transparent; cursor: pointer; }
-    .dm-spoiler.revealed { background: rgba(255,255,255,.07); color: inherit; }
-    .dm-mention { padding: 1px 4px; border-radius: 4px; background: rgba(240,166,60,.16); color: #ffdca8; font-weight: 650; }
-    .dm-link { color: var(--blue); text-decoration: none; }
-    .dm-link:hover { text-decoration: underline; }
-    .dm-subtext { color: var(--muted); font-size: 10.5px; }
     .banner { display: flex; gap: 11px; align-items: flex-start; margin-bottom: 18px; padding: 13px 15px; border: 1px solid rgba(244,189,80,.2); border-radius: 12px; background: rgba(244,189,80,.055); color: #e8ce94; font-size: 11px; line-height: 1.5; }
     .banner strong { color: #f7daa0; }
     .toast { position: fixed; z-index: 10; right: 22px; bottom: 22px; max-width: min(420px, calc(100vw - 44px)); padding: 13px 16px; border: 1px solid rgba(52,211,153,.24); border-radius: 12px; background: #14251f; color: #c9f7e5; box-shadow: 0 16px 50px rgba(0,0,0,.32); font-size: 12px; opacity: 0; transform: translateY(8px); pointer-events: none; transition: .22s ease; }
@@ -221,7 +165,6 @@
       .shell { grid-template-columns: 210px minmax(0, 1fr); }
       .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .two-col { grid-template-columns: 1fr; }
-      .rules-editor { grid-template-columns: 1fr; }
     }
     @media (max-width: 700px) {
       .shell { display: block; }
@@ -239,11 +182,9 @@
       .stat-card { min-height: 108px; padding: 14px; }
       .stat-value { font-size: 24px; }
       .card { padding: 15px; }
-      .form-grid, .rules-top { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
       .field.full { grid-column: auto; }
       .form-actions { flex-wrap: wrap; }
-      .reaction-entry { grid-template-columns: 66px minmax(0, 1fr) 104px auto; gap: 6px; }
-      .reaction-entry .reaction-action { padding: 8px 6px; font-size: 10.5px; }
     }
   </style>
 </head>
@@ -252,7 +193,7 @@
     <form id="login-form" class="login-card">
       <div class="brand-mark">⛨</div>
       <h1>Sentinel</h1>
-      <p>Sign in with the local dashboard key to manage your bot's servers, moderation, rules, and settings.</p>
+      <p>Sign in with the local dashboard key to manage your bot's servers, moderation, applications, and settings.</p>
       <label for="dashboard-key">Dashboard key</label>
       <input id="dashboard-key" type="password" autocomplete="current-password" placeholder="Paste your dashboard key" required>
       <p id="login-error" class="login-error hidden" role="alert"></p>
@@ -282,8 +223,6 @@
       <nav class="nav" aria-label="Dashboard sections">
         <button class="nav-btn active" data-page="overview"><span class="nav-icon">◈</span> Overview</button>
         <button class="nav-btn" data-page="punishments"><span class="nav-icon">⚑</span> Moderation</button>
-        <button class="nav-btn" data-page="rules"><span class="nav-icon">§</span> Rules & reactions</button>
-        <button class="nav-btn" data-page="tickets"><span class="nav-icon">🎟</span> Tickets</button>
         <button class="nav-btn" data-page="applications"><span class="nav-icon">📝</span> Applications</button>
         <button class="nav-btn" data-page="settings"><span class="nav-icon">⚙</span> Server settings</button>
         <button class="nav-btn" data-page="activity"><span class="nav-icon">◷</span> History</button>
@@ -317,7 +256,6 @@
           <article class="stat-card"><div class="stat-head">Connected servers <span class="stat-icon">◎</span></div><div id="stat-guilds" class="stat-value">—</div><div class="stat-note">Discord communities</div></article>
           <article class="stat-card"><div class="stat-head">Active cases <span class="stat-icon">⛨</span></div><div id="stat-punishments" class="stat-value">—</div><div class="stat-note">Across all connected servers</div></article>
           <article class="stat-card"><div class="stat-head">Selected members <span class="stat-icon">♙</span></div><div id="stat-members" class="stat-value">—</div><div class="stat-note">In the current server</div></article>
-          <article class="stat-card"><div class="stat-head">Rules gate <span class="stat-icon">✓</span></div><div id="stat-rules" class="stat-value">—</div><div class="stat-note">Reaction role status</div></article>
         </div>
         <div class="grid two-col">
           <article class="card">
@@ -328,7 +266,7 @@
             <div class="card-head"><div><h2 class="card-title">Quick actions</h2><p class="card-desc">Jump into common server operations.</p></div></div>
             <div class="quick-actions">
               <button class="quick-action" data-jump="punishments"><span class="qicon">＋</span><span><strong>Apply a punishment</strong><small>Set a duration and reason</small></span></button>
-              <button class="quick-action" data-jump="rules"><span class="qicon">✓</span><span><strong>Publish zone rules</strong><small>Enable the rules acceptance role</small></span></button>
+              <button class="quick-action" data-jump="applications"><span class="qicon">📝</span><span><strong>Build an application form</strong><small>Publish a panel and review submissions</small></span></button>
               <button class="quick-action" data-jump="settings"><span class="qicon">⚙</span><span><strong>Review server settings</strong><small>Roles, staff channel, and DMs</small></span></button>
             </div>
             <div style="height:14px"></div>
@@ -382,190 +320,6 @@
         </article>
       </section>
 
-      <section id="page-rules" class="page">
-        <div class="toolbar"><div><h2>Rules & reaction roles</h2><p>Publish an agreement post and choose the role granted when members react.</p></div></div>
-        <div class="grid rules-top">
-          <article class="card">
-            <div class="card-head"><div><h2 class="card-title">Published rule sets</h2><p class="card-desc">Every set has its own post: reactions on that message grant that set's role.</p></div><div style="display:flex;align-items:center;gap:8px"><span id="rules-state" class="tag muted">Not configured</span><button id="refresh-rulesets" class="btn secondary small" type="button">↻ Refresh</button></div></div>
-            <div id="rules-status" class="inline-status disabled"><div class="status-icon">!</div><div><strong>No published rule set</strong><span>Publish one below to configure its acceptance role.</span></div></div>
-            <div id="ruleset-list" class="reaction-legend"><span class="legend-empty">Publish your first rule set to see it here.</span></div>
-          </article>
-          <aside class="rules-tip"><strong>How the reaction gate works</strong>Members react with ✅ to receive that set's role. Removing the reaction removes the role. The role cannot have moderation or server-management permissions and must be below the bot's role. One server can run several rule sets — for example a "Zone rules" post and a shorter "Event rules" post — each with its own channel, role and text. The name you type is kept exactly as written: name a set "Server rules" and it stays that, with its own title.</aside>
-        </div>
-        <article class="card" style="margin-top:16px">
-          <div class="card-head"><div><h2 class="card-title">Publish or edit a rule set</h2><p class="card-desc">Discord Markdown is supported — the preview on the right shows the embed exactly as it will render. Publishing with a name that already exists replaces that set's post.</p></div><span id="rules-edit-state" class="tag muted">New rule set</span></div>
-          <form id="rules-form">
-            <div class="form-grid">
-              <div class="field"><label for="rules-name">Rule set name <span id="rules-name-hint" class="hint">Up to 80 characters · kept exactly as typed</span></label><input id="rules-name" maxlength="80" placeholder="Zone rules" required></div>
-              <div class="field"><label for="rules-channel">Post channel</label><select id="rules-channel" required><option value="">Choose a text channel</option></select></div>
-              <div class="field"><label for="rules-role">Acceptance role</label><select id="rules-role" required><option value="">Choose a role</option></select></div>
-            </div>
-            <div class="rules-editor" style="margin-top:14px">
-              <div class="field">
-                <label for="rules-text">Rules text <span id="rules-count" class="hint">0 / 4096</span></label>
-                <div class="md-toolbar" role="group" aria-label="Insert Discord Markdown">
-                  <button type="button" class="md-tool" data-editor="rules" data-md="bold" title="Bold — **text** (Ctrl+B)"><strong>B</strong></button>
-                  <button type="button" class="md-tool" data-editor="rules" data-md="italic" title="Italic — *text* (Ctrl+I)"><em>I</em></button>
-                  <button type="button" class="md-tool" data-editor="rules" data-md="underline" title="Underline — __text__"><u>U</u></button>
-                  <button type="button" class="md-tool" data-editor="rules" data-md="strike" title="Strikethrough — ~~text~~"><s>S</s></button>
-                  <button type="button" class="md-tool" data-editor="rules" data-md="spoiler" title="Spoiler — ||text||">▨</button>
-                  <button type="button" class="md-tool" data-editor="rules" data-md="h1" title="Heading 1 — # text">H1</button>
-                  <button type="button" class="md-tool" data-editor="rules" data-md="h2" title="Heading 2 — ## text">H2</button>
-                  <button type="button" class="md-tool" data-editor="rules" data-md="h3" title="Heading 3 — ### text">H3</button>
-                  <button type="button" class="md-tool" data-editor="rules" data-md="bullet" title="Bulleted list — - item">• List</button>
-                  <button type="button" class="md-tool" data-editor="rules" data-md="number" title="Numbered list — 1. item">1. List</button>
-                  <button type="button" class="md-tool" data-editor="rules" data-md="quote" title="Quote — > text">❝</button>
-                  <button type="button" class="md-tool" data-editor="rules" data-md="code" title="Inline code — `code` (Ctrl+E)">&lt;/&gt;</button>
-                  <button type="button" class="md-tool" data-editor="rules" data-md="codeblock" title="Code block — ``` … ```">&#96;&#96;&#96;</button>
-                  <button type="button" class="md-tool" data-editor="rules" data-md="link" title="Link — [label](https://…)">🔗</button>
-                </div>
-                <textarea id="rules-text" maxlength="4096" placeholder="Write the server rules…" required></textarea>
-                <div id="rules-hints" class="md-hints hidden"></div>
-              </div>
-              <div class="field">
-                <label>Live preview <span class="hint">As Discord renders the embed</span></label>
-                <div class="discord-post">
-                  <div id="rules-preview-content" class="discord-post-content">By reacting to this you acknowledge the rules and will abide by them.</div>
-                  <div class="discord-embed">
-                    <div class="discord-embed-title" id="rules-preview-title">Rules</div>
-                    <div id="rules-preview"><span class="dm-empty">Start typing to preview…</span></div>
-                    <div class="discord-embed-footer">React with ✅ to accept the rules</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="form-actions"><button id="rules-cancel-edit" class="btn secondary hidden" type="button">Cancel edit</button><button id="rules-submit" class="btn" type="submit">Publish rule set</button></div>
-          </form>
-        </article>
-
-        <div class="toolbar reaction-subhead">
-          <div><h2>Reaction role posts</h2><p>Publish extra self-service role menus. Each post gets its own message and up to 20 emoji → role pairs, and every pair either gives or removes its role.</p></div>
-          <button id="refresh-reaction-roles" class="btn secondary" type="button">↻ Refresh</button>
-        </div>
-        <div class="rules-editor">
-          <article class="card">
-            <div class="card-head"><div><h2 class="card-title">Compose the post</h2><p class="card-desc">The bot posts this message and adds one reaction per pair. Each pair gives its role or takes it away when a member reacts.</p></div><span id="reaction-edit-state" class="tag muted">New post</span></div>
-            <form id="reaction-form">
-              <div class="form-grid">
-                <div class="field"><label for="reaction-channel">Post channel</label><select id="reaction-channel" required><option value="">Choose a text channel</option></select></div>
-                <div class="field"><label for="reaction-style">Post style</label><select id="reaction-style"><option value="embed">Embed (title + text)</option><option value="plain">Plain message</option></select></div>
-                <div class="field full" id="reaction-title-field"><label for="reaction-title">Embed title <span class="hint">Optional · up to 256 characters</span></label><input id="reaction-title" maxlength="256" placeholder="Choose your roles"></div>
-              </div>
-              <div class="field" style="margin-top:14px">
-                <label for="reaction-message">Message <span id="reaction-count" class="hint">0 / 4096</span></label>
-                <div class="md-toolbar" role="group" aria-label="Insert Discord Markdown">
-                  <button type="button" class="md-tool" data-editor="reaction" data-md="bold" title="Bold — **text** (Ctrl+B)"><strong>B</strong></button>
-                  <button type="button" class="md-tool" data-editor="reaction" data-md="italic" title="Italic — *text* (Ctrl+I)"><em>I</em></button>
-                  <button type="button" class="md-tool" data-editor="reaction" data-md="underline" title="Underline — __text__"><u>U</u></button>
-                  <button type="button" class="md-tool" data-editor="reaction" data-md="strike" title="Strikethrough — ~~text~~"><s>S</s></button>
-                  <button type="button" class="md-tool" data-editor="reaction" data-md="spoiler" title="Spoiler — ||text||">▨</button>
-                  <button type="button" class="md-tool" data-editor="reaction" data-md="h1" title="Heading 1 — # text">H1</button>
-                  <button type="button" class="md-tool" data-editor="reaction" data-md="h2" title="Heading 2 — ## text">H2</button>
-                  <button type="button" class="md-tool" data-editor="reaction" data-md="h3" title="Heading 3 — ### text">H3</button>
-                  <button type="button" class="md-tool" data-editor="reaction" data-md="bullet" title="Bulleted list — - item">• List</button>
-                  <button type="button" class="md-tool" data-editor="reaction" data-md="number" title="Numbered list — 1. item">1. List</button>
-                  <button type="button" class="md-tool" data-editor="reaction" data-md="quote" title="Quote — > text">❝</button>
-                  <button type="button" class="md-tool" data-editor="reaction" data-md="code" title="Inline code — `code` (Ctrl+E)">&lt;/&gt;</button>
-                  <button type="button" class="md-tool" data-editor="reaction" data-md="codeblock" title="Code block — ``` … ```">&#96;&#96;&#96;</button>
-                  <button type="button" class="md-tool" data-editor="reaction" data-md="link" title="Link — [label](https://…)">🔗</button>
-                </div>
-                <textarea id="reaction-message" maxlength="4096" placeholder="Leave empty to post the default prompt."></textarea>
-                <div id="reaction-hints" class="md-hints hidden"></div>
-              </div>
-              <div class="field" style="margin-top:14px">
-                <label>Emoji → role pairs <span id="reaction-entry-count" class="hint">0 / 20</span></label>
-                <div id="reaction-entries" class="reaction-entries"></div>
-                <div class="reaction-entry-actions">
-                  <button id="reaction-add-entry" class="btn secondary small" type="button">+ Add pair</button>
-                  <button id="reaction-insert-legend" class="btn secondary small" type="button">Insert emoji list</button>
-                  <span class="hint">Quick add</span>
-                  <span id="reaction-quick-emoji" class="reaction-quick">
-                    <button type="button" data-emoji="🎮" aria-label="Add gaming emoji pair">🎮</button>
-                    <button type="button" data-emoji="🎬" aria-label="Add movies emoji pair">🎬</button>
-                    <button type="button" data-emoji="🎨" aria-label="Add art emoji pair">🎨</button>
-                    <button type="button" data-emoji="📢" aria-label="Add announcements emoji pair">📢</button>
-                    <button type="button" data-emoji="🔔" aria-label="Add notifications emoji pair">🔔</button>
-                    <button type="button" data-emoji="🧪" aria-label="Add testing emoji pair">🧪</button>
-                    <button type="button" data-emoji="🛠️" aria-label="Add build emoji pair">🛠️</button>
-                    <button type="button" data-emoji="✅" aria-label="Add check emoji pair">✅</button>
-                  </span>
-                </div>
-                <div class="reaction-note">Paste any emoji, or a custom emoji as <code>name:id</code>. Each pair has an action: <strong>Give role</strong> hands the role out when a member reacts — the ping-picker case — while <strong>Remove role</strong> strips it, for an opt-out emoji (e.g. "react to stop being pinged"). <strong>Insert emoji list</strong> writes the current pairs into the message so members know what each reaction does. The role must sit below the bot's role and must not carry moderation permissions — the same rules as the acceptance role. Message text is posted with mentions disabled and the bot never pings anyone. Members keep the roles they already picked if you later change or remove a pair.</div>
-              </div>
-              <label style="display:flex;align-items:center;gap:9px;margin-top:14px;color:var(--soft);font-size:12px;font-weight:650">
-                <input id="reaction-remove-on-unreact" type="checkbox" checked style="width:auto;min-height:auto"> Undo the change when a member removes their reaction <span class="hint">(give pairs take the role back; remove pairs hand it back)</span>
-              </label>
-              <div class="form-actions"><button id="reaction-cancel-edit" class="btn secondary hidden" type="button">Cancel edit</button><button id="reaction-submit" class="btn" type="submit">Publish post</button></div>
-            </form>
-          </article>
-          <article class="card">
-            <div class="card-head"><div><h2 class="card-title">Live preview</h2><p class="card-desc">Exactly what the bot will post.</p></div><span id="reaction-preview-style" class="tag muted">Embed</span></div>
-            <div class="discord-post">
-              <div id="reaction-preview-content" class="discord-post-content hidden"></div>
-              <div id="reaction-preview-embed" class="discord-embed">
-                <div class="discord-embed-title" id="reaction-preview-title">Choose your roles</div>
-                <div id="reaction-preview"><span class="dm-empty">Start typing to preview…</span></div>
-              </div>
-            </div>
-            <div id="reaction-preview-legend" class="reaction-legend"><span class="legend-empty">Add an emoji and role pair to see the role key.</span></div>
-          </article>
-        </div>
-        <article class="card" style="margin-top:16px">
-          <div class="card-head"><div><h2 class="card-title">Published reaction role posts</h2><p class="card-desc">Edit a post's message or pairs, or remove it and delete its message.</p></div><span id="reaction-post-total" class="tag muted">0 posts</span></div>
-          <div id="reaction-posts"><div class="empty">Loading reaction role posts…</div></div>
-        </article>
-      </section>
-
-      <section id="page-tickets" class="page">
-        <div class="toolbar"><div><h2>Tickets</h2><p>Members open a ticket from a panel button; it stays private to them and staff. Members never see this page — the dashboard is staff-only, and there is no member-facing command that lists tickets.</p></div><div class="toolbar-right"><button id="refresh-tickets" class="btn secondary">↻ Refresh</button></div></div>
-        <div class="grid two-col">
-          <article class="card">
-            <div class="card-head"><div><h2 class="card-title">Ticket panel</h2><p class="card-desc">Publish (or re-publish) the message with one button per category. Republishing edits the existing message, so it never doubles up.</p></div><span id="ticket-panel-state" class="tag muted">Not published</span></div>
-            <form id="ticket-panel-form">
-              <div class="form-grid">
-                <div class="field"><label for="ticket-panel-channel">Panel channel</label><select id="ticket-panel-channel" required><option value="">Choose a text channel</option></select></div>
-                <div class="field"><label for="ticket-panel-title">Panel title <span class="hint">Optional</span></label><input id="ticket-panel-title" maxlength="256" placeholder="Support tickets"></div>
-                <div class="field full"><label for="ticket-panel-description">Panel text <span class="hint">Shown above the buttons</span></label><textarea id="ticket-panel-description" maxlength="4096" placeholder="Press a button below to open a private ticket."></textarea></div>
-              </div>
-              <div style="display:flex;gap:8px;margin-top:14px"><button class="btn" type="submit">Publish panel</button><button id="ticket-panel-refresh" class="btn secondary" type="button">↻ Reset form</button></div>
-            </form>
-          </article>
-          <article class="card">
-            <div class="card-head"><div><h2 class="card-title">How tickets arrive</h2><p class="card-desc">Threads are invite-only; channels use Discord permissions so a whole staff role gets access at once.</p></div></div>
-            <div class="form-grid">
-              <div class="field full"><label for="ticket-mode">Default mode <span class="hint">Each category can override it</span></label><select id="ticket-mode"><option value="thread">Private thread (recommended)</option><option value="channel">Private channel</option></select></div>
-              <div class="field full"><label for="ticket-log-channel">Staff notice channel <span class="hint">Where Claim/Close notices are posted</span></label><select id="ticket-log-channel"><option value="">Use the configured staff channel</option></select></div>
-              <div class="field full"><label for="ticket-category">Channel category <span class="hint">Where channel-mode tickets are created</span></label><select id="ticket-category"><option value="">Same category as the panel</option></select></div>
-            </div>
-            <div style="margin-top:14px"><button id="ticket-settings-save" class="btn" type="button">Save ticket settings</button></div>
-          </article>
-        </div>
-        <div class="grid two-col" style="margin-top:16px">
-          <article class="card">
-            <div class="card-head"><div><h2 class="card-title">Categories</h2><p class="card-desc">One button per category. A category can use its own staff role and mode.</p></div><span id="ticket-category-total" class="tag muted">0 categories</span></div>
-            <div id="ticket-category-list" class="table-wrap"><div class="empty">Loading categories…</div></div>
-          </article>
-          <article class="card">
-            <div class="card-head"><div><h2 class="card-title">Add or update a category</h2><p class="card-desc">Saving with an existing name updates that button instead of adding a second one.</p></div><span id="ticket-category-state" class="tag muted">New category</span></div>
-            <form id="ticket-category-form">
-              <div class="form-grid">
-                <div class="field"><label for="ticket-category-label">Name</label><input id="ticket-category-label" maxlength="80" placeholder="General help" required></div>
-                <div class="field"><label for="ticket-category-emoji">Emoji <span class="hint">Optional</span></label><input id="ticket-category-emoji" maxlength="100" placeholder="❓"></div>
-                <div class="field"><label for="ticket-category-role">Staff role <span class="hint">Overrides the server staff role</span></label><select id="ticket-category-role"><option value="">Server staff role</option></select></div>
-                <div class="field"><label for="ticket-category-mode">Mode <span class="hint">Inherits the default when empty</span></label><select id="ticket-category-mode"><option value="">Inherit default</option><option value="thread">Private thread</option><option value="channel">Private channel</option></select></div>
-                <div class="field full"><label for="ticket-category-description">Description <span class="hint">Shown in the panel's category list</span></label><input id="ticket-category-description" maxlength="200" placeholder="Questions about the server"></div>
-                <div class="field"><label for="ticket-category-subject">Ask for a subject <span class="hint">Modal before opening</span></label><select id="ticket-category-subject"><option value="true">Yes</option><option value="false">No</option></select></div>
-                <div class="field"><label for="ticket-category-ping">Ping the staff role</label><select id="ticket-category-ping"><option value="true">Yes</option><option value="false">No</option></select></div>
-              </div>
-              <div style="display:flex;gap:8px;margin-top:14px"><button class="btn" type="submit">Save category</button><button id="ticket-category-cancel" class="btn secondary" type="button">Cancel edit</button></div>
-            </form>
-          </article>
-        </div>
-        <article class="card" style="margin-top:16px">
-          <div class="card-head"><div><h2 class="card-title">Open and closed tickets</h2><p class="card-desc">Closing locks the ticket and keeps the record; deleting removes the thread/channel too.</p></div><div style="display:flex;align-items:center;gap:8px"><select id="ticket-status-filter" style="width:auto"><option value="all">All statuses</option><option value="open">Open and claimed</option><option value="closed">Closed</option></select><span id="ticket-total" class="tag muted">0 shown</span></div></div>
-          <div id="ticket-table" class="table-wrap"><div class="empty">Loading tickets…</div></div>
-        </article>
-      </section>
       <section id="page-applications" class="page">
         <div class="toolbar"><div><h2>Applications</h2><p>Members fill in a form from /apply or a panel button. Answers land in the review channel and here; only staff can read or decide them.</p></div><div class="toolbar-right"><button id="refresh-applications" class="btn secondary">↻ Refresh</button></div></div>
         <div class="grid two-col">
@@ -649,13 +403,11 @@
       const titles = {
         overview: ["Control center", "Overview", "Monitor connected servers and active moderation."],
         punishments: ["Moderation", "Moderation", "Manage timed role actions, warnings, and active cases."],
-        rules: ["Community", "Rules & reactions", "Publish the rules post and build multi-role reaction menus."],
-        tickets: ["Support", "Tickets", "Publish the ticket panel, tune categories and handle open tickets."],
         applications: ["Recruiting", "Applications", "Build application forms, publish panels and decide submissions."],
         settings: ["Configuration", "Server settings", "Set role flow, staff alerts, and member notifications."],
         activity: ["Audit trail", "History", "Review recent completed and pardoned cases."],
       };
-      const state = { csrf: "", guildId: sessionStorage.getItem("pm.guild") || "", page: "overview", overview: null, detail: null, toastTimer: null, reactionPosts: [], reactionConfig: null, reactionEditId: null, ticketSettings: null, tickets: [], applicationForms: [], applications: [], applicationEditId: null, applicationDetailId: null };
+      const state = { csrf: "", guildId: sessionStorage.getItem("pm.guild") || "", page: "overview", overview: null, detail: null, toastTimer: null, applicationForms: [], applications: [], applicationEditId: null, applicationDetailId: null };
       const $ = (id) => document.getElementById(id);
       const escapeHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
@@ -665,8 +417,8 @@
       // on the bot. Server responses stringify ids already; this scanner is a
       // belt-and-braces pass over the raw response text that quotes any bare
       // 16+ digit integer before JSON.parse can lose precision. It tracks
-      // string state, so ids inside text (a rules body, a reason) are never
-      // rewritten.
+      // string state, so ids inside text (an application answer, a reason) are
+      // never rewritten.
       function parseJsonExact(text) {
         let out = "";
         let inString = false;
@@ -825,7 +577,6 @@
             await loadPageData(state.page);
           } else {
             $("stat-members").textContent = "—";
-            $("stat-rules").textContent = "—";
           }
         } catch (error) { showToast(friendlyError(error.message), true); }
       }
@@ -835,31 +586,13 @@
         state.detail = await api(`/api/guilds/${encodeURIComponent(state.guildId)}`);
         const guild = state.detail.guild || {};
         $("stat-members").textContent = guild.memberCount == null ? "—" : Number(guild.memberCount).toLocaleString();
-        $("stat-rules").textContent = state.detail.rules?.enabled ? "Active" : "Off";
         const select = $("server-select");
         if (select.value !== state.guildId) select.value = state.guildId;
-        // The rules form is for a *new* set unless an edit is in progress, so
-        // re-filling selects uses whatever the administrator already picked.
-        const rulesChannel = $("rules-channel").value;
-        const rulesRole = $("rules-role").value;
-        fillSelect("rules-channel", state.detail.channels, rulesChannel || null, "Choose a text channel");
-        fillSelect("rules-role", state.detail.roles, rulesRole || null, "Choose a role");
-        state.rulesets = state.detail.rules?.rulesets || [];
-        renderRulesets();
         fillSelect("settings-punish-role", state.detail.roles, state.detail.settings?.punishRoleId, "Choose a role");
         fillSelect("settings-post-role", state.detail.roles, state.detail.settings?.postRoleId, "Choose a role");
         fillSelect("settings-staff-role", state.detail.roles, state.detail.settings?.staffRoleId, "No staff role");
         fillSelect("settings-staff-channel", state.detail.channels, state.detail.settings?.staffChannelId, "No staff channel");
         $("settings-dm-user").value = String(state.detail.settings?.dmUser !== false);
-        updateRulesPreviewTitle();
-        // Keep whatever channel the administrator already picked for a new
-        // reaction-role post; the role dropdowns in the pair rows follow the
-        // server's role list.
-        const reactionChannel = $("reaction-channel").value;
-        fillSelect("reaction-channel", state.detail.channels, reactionChannel || null, "Choose a text channel");
-        $("reaction-preview-title").textContent = $("reaction-title").value.trim() || "Reaction roles";
-        refreshReactionRoleOptions();
-        scheduleRulesPreview();
         if (state.detail.warningCount != null) $("warning-total").textContent = `${state.detail.warningCount} total`;
       }
 
@@ -874,128 +607,12 @@
         if (selected != null) select.value = String(selected);
       }
 
-      function rulesetFor(rulesetId) {
-        return (state.rulesets || []).find((item) => String(item.rulesetId) === String(rulesetId));
-      }
-
-      // The embed title mirrors the server: "Guild Rules" for the default
-      // name, "Guild — <name>" for anything else (rules.rules_embed_title).
-      function updateRulesPreviewTitle() {
-        const guild = state.detail?.guild?.name || "Server";
-        // The typed name wins: only the current default ("Zone rules", any
-        // case) gets the short "Guild Rules" title, so a set deliberately
-        // named "Server rules" keeps its own title instead of being corrected.
-        const fallback = state.rulesConfig?.defaultName || "Zone rules";
-        const name = ($("rules-name").value || "").trim() || fallback;
-        const isDefault = name.toLowerCase() === String(fallback).toLowerCase();
-        $("rules-preview-title").textContent = isDefault ? `${guild} Rules` : `${guild} — ${name}`;
-      }
-
-      function updateRulesStatus() {
-        const box = $("rules-status");
-        const tag = $("rules-state");
-        const sets = state.rulesets || [];
-        const max = state.rulesConfig?.maxRulesets || 25;
-        if (sets.length) {
-          box.classList.remove("disabled");
-          box.querySelector(".status-icon").textContent = "✓";
-          box.querySelector("strong").textContent = `${sets.length} rule set${sets.length === 1 ? "" : "s"} active`;
-          box.querySelector("span").textContent = "Reacting ✅ on a set's post grants that set's role.";
-          tag.textContent = "Active"; tag.className = "tag success";
-        } else {
-          box.classList.add("disabled");
-          box.querySelector(".status-icon").textContent = "!";
-          box.querySelector("strong").textContent = "No published rule set";
-          box.querySelector("span").textContent = "Publish one below to configure its acceptance role.";
-          tag.textContent = "Not configured"; tag.className = "tag muted";
-        }
-        $("rules-name-hint").textContent = `${sets.length} / ${max} sets`;
-      }
-
-      function renderRulesets() {
-        const root = $("ruleset-list");
-        const sets = state.rulesets || [];
-        updateRulesStatus();
-        if (!sets.length) {
-          root.innerHTML = `<span class="legend-empty">Publish your first rule set to see it here.</span>`;
-          return;
-        }
-        root.innerHTML = sets.map((ruleset) => {
-          const editing = String(state.rulesEditId) === String(ruleset.rulesetId);
-          const target = `#${escapeHtml(ruleset.channelName || "unknown channel")} → ${escapeHtml(ruleset.roleName || "role missing")}`;
-          const snippet = (ruleset.text || "").replace(/\s+/g, " ").slice(0, 120);
-          return `<div class="post-row">
-            <div class="post-main">
-              <div class="post-title">${escapeHtml(ruleset.name)}${editing ? `<span class="tag warn">Editing</span>` : ""}</div>
-              <div class="post-snippet">${escapeHtml(snippet)}</div>
-              <div class="subtle" style="margin-top:9px">${target} · message ${escapeHtml(ruleset.messageId || "?")}</div>
-            </div>
-            <div class="post-actions">
-              <button class="btn secondary small ruleset-edit" data-ruleset="${escapeHtml(ruleset.rulesetId)}" type="button">✎ Edit</button>
-              <button class="btn danger small ruleset-remove" data-ruleset="${escapeHtml(ruleset.rulesetId)}" type="button">Disable</button>
-            </div>
-          </div>`;
-        }).join("");
-        root.querySelectorAll(".ruleset-edit").forEach((button) => button.addEventListener("click", () => startRulesEdit(button.dataset.ruleset)));
-        root.querySelectorAll(".ruleset-remove").forEach((button) => button.addEventListener("click", () => disableRuleset(button.dataset.ruleset)));
-      }
-
-      function startRulesEdit(rulesetId) {
-        const ruleset = rulesetFor(rulesetId);
-        if (!ruleset) return;
-        state.rulesEditId = ruleset.rulesetId;
-        $("rules-name").value = ruleset.name || "";
-        $("rules-channel").value = String(ruleset.channelId || "");
-        $("rules-role").value = String(ruleset.roleId || "");
-        $("rules-text").value = ruleset.text || "";
-        $("rules-edit-state").textContent = "Editing rule set";
-        $("rules-edit-state").className = "tag warn";
-        $("rules-submit").textContent = "Save changes";
-        $("rules-cancel-edit").classList.remove("hidden");
-        renderRulesets();
-        updateRulesPreviewTitle();
-        scheduleRulesPreview();
-        $("rules-form").scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-
-      function cancelRulesEdit() {
-        state.rulesEditId = null;
-        $("rules-name").value = "";
-        $("rules-text").value = "";
-        $("rules-edit-state").textContent = "New rule set";
-        $("rules-edit-state").className = "tag muted";
-        $("rules-submit").textContent = "Publish rule set";
-        $("rules-cancel-edit").classList.add("hidden");
-        renderRulesets();
-        updateRulesPreviewTitle();
-        scheduleRulesPreview();
-      }
-
-      async function disableRuleset(rulesetId) {
-        const ruleset = rulesetFor(rulesetId);
-        const name = ruleset?.name || "this rule set";
-        if (!confirm(`Disable “${name}”? Its post is marked disabled and reactions stop granting the role. Existing role assignments stay as they are.`)) return;
-        try {
-          await api(`/api/guilds/${encodeURIComponent(state.guildId)}/rules/${encodeURIComponent(rulesetId)}`, { method: "DELETE" });
-          showToast(`Rule set “${name}” disabled.`);
-          if (String(state.rulesEditId) === String(rulesetId)) cancelRulesEdit();
-          await loadGuildDetail();
-          await loadOverview();
-        } catch (error) { showToast(friendlyError(error.message), true); }
-      }
-
       async function loadPageData(page) {
         if (!state.guildId) return;
         if (page === "overview" || page === "punishments") await loadPunishments();
         if (page === "punishments") await loadWarnings();
         if (page === "activity") await loadHistory();
-        if (page === "rules" || page === "settings") await loadGuildDetail();
-        if (page === "rules") {
-          if (!reactionEntryRows().length) addReactionEntry();
-          await loadReactionRoles();
-          await refreshReactionPreview();
-        }
-        if (page === "tickets") await loadTickets();
+        if (page === "settings") await loadGuildDetail();
         if (page === "applications") await loadApplications();
       }
 
@@ -1115,481 +732,6 @@
         } catch (error) { showToast(friendlyError(error.message), true); }
       }
 
-      // ---- Rules Markdown editor ----------------------------------------- //
-      // The preview is rendered by the bot (discord_markdown.py) so it matches
-      // what Discord shows instead of what a generic Markdown parser would.
-      const MD_WRAPS = {
-        bold: ["**", "**", "bold text"],
-        italic: ["*", "*", "italic text"],
-        underline: ["__", "__", "underlined text"],
-        strike: ["~~", "~~", "strikethrough"],
-        spoiler: ["||", "||", "spoiler"],
-        code: ["`", "`", "code"],
-        codeblock: ["```\n", "\n```", "code block"],
-        link: ["[", "](https://example.com)", "link label"],
-      };
-      const MD_LINE_PREFIXES = { h1: "# ", h2: "## ", h3: "### ", bullet: "- ", quote: "> " };
-      const MD_LINE_MARKERS = { h1: /^#{1,3} /, h2: /^#{1,3} /, h3: /^#{1,3} /, bullet: /^[-*+] /, quote: /^> /, number: /^\d{1,3}[.)] / };
-
-      // Both editors (the rules embed and a reaction-role message) share the
-      // same rendering endpoint, the same formatting toolbar and the same
-      // debounce, so the two cannot behave differently.
-      const editors = {
-        rules: {
-          text: "rules-text", preview: () => "rules-preview", hints: "rules-hints",
-          count: "rules-count", limit: () => 4096, compose: (value) => value,
-          timer: null, request: 0,
-        },
-        reaction: {
-          text: "reaction-message", hints: "reaction-hints", count: "reaction-count",
-          preview: () => ($("reaction-style").value === "plain" ? "reaction-preview-content" : "reaction-preview"),
-          limit: reactionMessageLimit, compose: (value) => value.trim() || reactionDefaultMessage(),
-          timer: null, request: 0,
-        },
-      };
-
-      function editorSelection(editor) {
-        const area = $(editor.text);
-        return { area, value: area.value, start: area.selectionStart, end: area.selectionEnd };
-      }
-
-      function wrapEditorSelection(editor, open, close, placeholder) {
-        const { area, value, start, end } = editorSelection(editor);
-        const selected = value.slice(start, end) || placeholder;
-        area.value = value.slice(0, start) + open + selected + close + value.slice(end);
-        area.focus();
-        area.setSelectionRange(start + open.length, start + open.length + selected.length);
-        schedulePreview(editor);
-      }
-
-      function prefixEditorLines(editor, kind) {
-        const { area, value, start, end } = editorSelection(editor);
-        const lineStart = value.lastIndexOf("\n", start - 1) + 1;
-        const found = value.indexOf("\n", end);
-        const lineEnd = found === -1 ? value.length : found;
-        const block = value.slice(lineStart, lineEnd);
-        const lines = block.split("\n");
-        const marker = MD_LINE_MARKERS[kind];
-        const togglingOff = lines.every((line) => marker.test(line));
-        let counter = 0;
-        const updated = lines.map((line) => {
-          const bare = line.replace(/^\s*(?:[-*+] |\d{1,3}[.)] |#{1,3} |> )?/, "");
-          if (togglingOff) return bare;
-          if (kind === "number") { counter += 1; return `${counter}. ${bare}`; }
-          return `${MD_LINE_PREFIXES[kind]}${bare}`;
-        }).join("\n");
-        area.value = value.slice(0, lineStart) + updated + value.slice(lineEnd);
-        area.focus();
-        area.setSelectionRange(lineStart, lineStart + updated.length);
-        schedulePreview(editor);
-      }
-
-      function insertMarkdown(editor, kind) {
-        if (MD_WRAPS[kind]) { const [open, close, placeholder] = MD_WRAPS[kind]; wrapEditorSelection(editor, open, close, placeholder); }
-        else prefixEditorLines(editor, kind);
-      }
-
-      document.querySelectorAll(".md-tool").forEach((button) => {
-        button.addEventListener("click", () => insertMarkdown(editors[button.dataset.editor] || editors.rules, button.dataset.md));
-      });
-
-      Object.values(editors).forEach((editor) => {
-        $(editor.text).addEventListener("keydown", (event) => {
-          if (!(event.ctrlKey || event.metaKey)) return;
-          const shortcut = { b: "bold", i: "italic", e: "code" }[event.key.toLowerCase()];
-          if (!shortcut) return;
-          event.preventDefault();
-          insertMarkdown(editor, shortcut);
-        });
-        $(editor.text).addEventListener("input", () => schedulePreview(editor));
-      });
-
-      document.querySelectorAll(".discord-post").forEach((post) => {
-        post.addEventListener("click", (event) => {
-          const spoiler = event.target.closest(".dm-spoiler");
-          if (spoiler) spoiler.classList.toggle("revealed");
-        });
-      });
-
-      function renderHints(editor, warnings) {
-        const box = $(editor.hints);
-        box.innerHTML = (warnings || []).map((warning) => `<div class="md-hint"><span>⚠</span><span>${escapeHtml(warning)}</span></div>`).join("");
-        box.classList.toggle("hidden", !warnings || !warnings.length);
-      }
-
-      function schedulePreview(editor) {
-        const limit = editor.limit();
-        $(editor.count).textContent = `${$(editor.text).value.length} / ${limit}`;
-        if (editor.timer) clearTimeout(editor.timer);
-        editor.timer = setTimeout(() => refreshPreview(editor), 250);
-      }
-
-      async function refreshPreview(editor) {
-        // compose() mirrors the server: the reaction editor falls back to the
-        // default prompt for an empty box, exactly like the publish path does.
-        const text = editor.compose($(editor.text).value);
-        if (!state.guildId) return;
-        if (text.length > editor.limit()) {
-          renderHints(editor, [`This post style is limited to ${editor.limit()} characters.`]);
-          return;
-        }
-        if (!text.trim()) {
-          $(editor.preview()).innerHTML = `<span class="dm-empty">Start typing to preview…</span>`;
-          renderHints(editor, []);
-          return;
-        }
-        const request = ++editor.request;
-        try {
-          const result = await api(`/api/guilds/${encodeURIComponent(state.guildId)}/rules/preview`, { method: "POST", body: JSON.stringify({ text }) });
-          if (request !== editor.request) return;  // a newer keystroke already won
-          $(editor.preview()).innerHTML = result.html || `<span class="dm-empty">Start typing to preview…</span>`;
-          renderHints(editor, result.warnings || []);
-        } catch (error) {
-          if (request !== editor.request) return;
-          renderHints(editor, [friendlyError(error.message)]);
-        }
-      }
-
-      function scheduleRulesPreview() {
-        updateRulesPreviewTitle();
-        schedulePreview(editors.rules);
-      }
-
-      $("rules-form").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const name = $("rules-name").value.trim();
-        if (!name) { showToast("Give this rule set a name — it is how you edit or disable it later.", true); return; }
-        const payload = {
-          name,
-          channelId: $("rules-channel").value,
-          roleId: $("rules-role").value,
-          text: $("rules-text").value,
-        };
-        const editing = state.rulesEditId;
-        const button = event.submitter || $("rules-submit");
-        button.disabled = true;
-        try {
-          if (editing) {
-            await api(`/api/guilds/${encodeURIComponent(state.guildId)}/rules/${encodeURIComponent(editing)}`, { method: "POST", body: JSON.stringify(payload) });
-            showToast(`Rule set “${name}” updated.`);
-          } else {
-            await api(`/api/guilds/${encodeURIComponent(state.guildId)}/rules`, { method: "PUT", body: JSON.stringify(payload) });
-            showToast(`Rule set “${name}” published; members can react to accept it.`);
-          }
-          cancelRulesEdit();
-          await loadGuildDetail();
-          await loadOverview();
-        } catch (error) { showToast(friendlyError(error.message), true); }
-        finally { button.disabled = false; }
-      });
-
-      $("rules-cancel-edit").addEventListener("click", cancelRulesEdit);
-      $("refresh-rulesets").addEventListener("click", () => loadGuildDetail().catch((error) => showToast(friendlyError(error.message), true)));
-      $("rules-name").addEventListener("input", updateRulesPreviewTitle);
-      $("rules-name").addEventListener("keydown", (event) => {
-        // Enter in a single-line input shouldn't submit the whole editor.
-        if (event.key === "Enter") event.preventDefault();
-      });
-
-      // ---- Reaction role menus ------------------------------------------- //
-      // Each post is one bot message with its own emoji → role pairs. The
-      // server posts it, adds the reactions and stores the mapping; the bot
-      // then grants/removes roles from raw reaction events (reaction_roles.py).
-      function reactionLimit(kind) {
-        const limits = state.reactionConfig?.limits || {};
-        return kind === "plain" ? (limits.plain ?? 2000) : (limits.embed ?? 4096);
-      }
-
-      function reactionMessageLimit() {
-        return reactionLimit($("reaction-style").value === "plain" ? "plain" : "embed");
-      }
-
-      function reactionMaxEntries() { return state.reactionConfig?.maxEntries || 20; }
-
-      function reactionDefaultMessage() {
-        return state.reactionConfig?.defaultMessage || "React with an emoji below to add or remove a role.";
-      }
-
-      function reactionEntryRows() {
-        return Array.from(document.querySelectorAll("#reaction-entries .reaction-entry"));
-      }
-
-      function readReactionEntries() {
-        return reactionEntryRows().map((row) => ({
-          emoji: row.querySelector(".reaction-emoji").value.trim(),
-          roleId: row.querySelector(".reaction-role").value,
-          action: row.querySelector(".reaction-action").value,
-        }));
-      }
-
-      function reactionActionLabel(action) {
-        return action === "remove" ? "removed on react" : "given on react";
-      }
-
-      function roleName(roleId) {
-        const role = (state.detail?.roles || []).find((r) => String(r.id) === String(roleId));
-        return role ? role.name : "";
-      }
-
-      function addReactionEntry(emoji = "", roleId = "", action = "add") {
-        if (reactionEntryRows().length >= reactionMaxEntries()) {
-          showToast(`A post can hold at most ${reactionMaxEntries()} emoji → role pairs.`, true);
-          return;
-        }
-        const row = document.createElement("div");
-        row.className = "reaction-entry";
-
-        const emojiInput = document.createElement("input");
-        emojiInput.className = "reaction-emoji";
-        emojiInput.maxLength = 100;
-        emojiInput.placeholder = "🎮";
-        emojiInput.value = emoji;
-        emojiInput.setAttribute("aria-label", "Reaction emoji");
-
-        const roleSelect = document.createElement("select");
-        roleSelect.className = "reaction-role";
-        roleSelect.setAttribute("aria-label", "Role granted by this emoji");
-        roleSelect.innerHTML = `<option value="">Choose a role</option>` + (state.detail?.roles || [])
-          .map((role) => `<option value="${role.id}">${escapeHtml(role.name)}</option>`).join("");
-        if (roleId) {
-          if (!roleName(roleId)) {
-            // Keep a mapping to a role the dashboard can no longer see instead
-            // of silently dropping it; the server reports it as invalid.
-            roleSelect.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(String(roleId))}">Role ${escapeHtml(String(roleId))} (not found)</option>`);
-          }
-          roleSelect.value = String(roleId);
-        }
-
-        const actionSelect = document.createElement("select");
-        actionSelect.className = "reaction-action";
-        actionSelect.setAttribute("aria-label", "What reacting does");
-        actionSelect.innerHTML = `<option value="add">Give role</option><option value="remove">Remove role</option>`;
-        actionSelect.value = action === "remove" ? "remove" : "add";
-
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.className = "btn danger small";
-        remove.textContent = "✕";
-        remove.setAttribute("aria-label", "Remove this pair");
-        remove.addEventListener("click", () => {
-          row.remove();
-          updateReactionEntryCount();
-          refreshReactionPreview();
-        });
-
-        emojiInput.addEventListener("input", () => { updateReactionEntryCount(); scheduleReactionPreview(); });
-        roleSelect.addEventListener("change", () => { updateReactionEntryCount(); refreshReactionPreview(); });
-        actionSelect.addEventListener("change", () => { refreshReactionPreview(); });
-
-        row.append(emojiInput, roleSelect, actionSelect, remove);
-        $("reaction-entries").append(row);
-        updateReactionEntryCount();
-      }
-
-      function updateReactionEntryCount() {
-        $("reaction-entry-count").textContent = `${reactionEntryRows().length} / ${reactionMaxEntries()}`;
-      }
-
-      function renderReactionLegend() {
-        const box = $("reaction-preview-legend");
-        const entries = readReactionEntries().filter((entry) => entry.emoji);
-        if (!entries.length) {
-          box.innerHTML = `<span class="legend-empty">Add an emoji and role pair to see the role key.</span>`;
-          return;
-        }
-        box.innerHTML = entries.map((entry) => {
-          const name = roleName(entry.roleId) || (entry.roleId ? "role not found" : "no role chosen");
-          return `<div class="reaction-legend-row"><span class="reaction-legend-emoji">${escapeHtml(entry.emoji)}</span><span>${escapeHtml(name)}</span><span class="reaction-action-note">${reactionActionLabel(entry.action)}</span></div>`;
-        }).join("");
-      }
-
-      function updateReactionStyle() {
-        const useEmbed = $("reaction-style").value !== "plain";
-        $("reaction-title-field").classList.toggle("hidden", !useEmbed);
-        $("reaction-preview-embed").classList.toggle("hidden", !useEmbed);
-        $("reaction-preview-content").classList.toggle("hidden", useEmbed);
-        $("reaction-preview-style").textContent = useEmbed ? "Embed" : "Plain message";
-        $("reaction-message").maxLength = reactionMessageLimit();
-        refreshReactionPreview();
-      }
-
-      function scheduleReactionPreview() {
-        // Debounced like the rules editor, but the reaction preview also
-        // redraws the role key, so it goes through refreshReactionPreview.
-        const editor = editors.reaction;
-        $(editor.count).textContent = `${$(editor.text).value.length} / ${reactionMessageLimit()}`;
-        if (editor.timer) clearTimeout(editor.timer);
-        editor.timer = setTimeout(refreshReactionPreview, 250);
-      }
-
-      async function refreshReactionPreview() {
-        renderReactionLegend();
-        updateReactionEntryCount();
-        // The style decides the limit (2,000 plain / 4,096 embed), so the
-        // counter has to follow a style switch as well as a keystroke.
-        $(editors.reaction.count).textContent = `${$(editors.reaction.text).value.length} / ${reactionMessageLimit()}`;
-        $("reaction-preview-title").textContent = $("reaction-title").value.trim() || "Reaction roles";
-        await refreshPreview(editors.reaction);
-      }
-
-      function refreshReactionRoleOptions() {
-        const roles = state.detail?.roles || [];
-        const options = `<option value="">Choose a role</option>` + roles.map((role) => `<option value="${role.id}">${escapeHtml(role.name)}</option>`).join("");
-        document.querySelectorAll("#reaction-entries .reaction-role").forEach((select) => {
-          const current = select.value;
-          select.innerHTML = options;
-          select.value = current;
-        });
-        renderReactionLegend();
-      }
-
-      async function loadReactionRoles() {
-        if (!state.guildId) return;
-        const result = await api(`/api/guilds/${encodeURIComponent(state.guildId)}/reaction-roles`);
-        state.reactionConfig = result;
-        state.reactionPosts = result.posts || [];
-        const total = state.reactionPosts.length;
-        $("reaction-post-total").textContent = `${total} post${total === 1 ? "" : "s"}`;
-        renderReactionPosts();
-        updateReactionEntryCount();
-      }
-
-      function renderReactionPosts() {
-        const root = $("reaction-posts");
-        const posts = state.reactionPosts || [];
-        if (!posts.length) {
-          root.innerHTML = `<div class="empty"><strong>No reaction role posts yet</strong>Compose one above and press “Publish post”. Members pick their own roles by reacting.</div>`;
-          return;
-        }
-        root.innerHTML = posts.map((post) => {
-          const channel = (state.detail?.channels || []).find((c) => String(c.id) === String(post.channelId));
-          const chips = (post.entries || []).map((entry) => {
-            const name = roleName(entry.roleId) || `Role ${entry.roleId || "?"}`;
-            const action = entry.action === "remove" ? `<span class="reaction-action-note">${reactionActionLabel(entry.action)}</span>` : "";
-            return `<span class="post-chip"><span class="chip-emoji">${escapeHtml(entry.emoji)}</span>${escapeHtml(name)}${action}</span>`;
-          }).join("") || `<span class="post-chip">No pairs</span>`;
-          const message = post.message.length > 170 ? `${post.message.slice(0, 170)}…` : post.message;
-          return `<div class="post-row">
-            <div class="post-main">
-              <div class="post-title">${escapeHtml(post.title || "Reaction roles")}<span class="tag muted">${post.useEmbed ? "Embed" : "Message"}</span>${post.removeOnUnreact ? "" : `<span class="tag muted">No undo on unreact</span>`}</div>
-              <div class="post-snippet">${escapeHtml(message)}</div>
-              <div class="post-chips">${chips}</div>
-              <div class="subtle" style="margin-top:9px">#${escapeHtml(channel?.name || "unknown channel")} · message ${escapeHtml(post.messageId || "?")}</div>
-            </div>
-            <div class="post-actions">
-              <button class="btn secondary small reaction-edit" data-post="${escapeHtml(post.postId)}" type="button">✎ Edit</button>
-              <button class="btn danger small reaction-remove" data-post="${escapeHtml(post.postId)}" type="button">Remove</button>
-            </div>
-          </div>`;
-        }).join("");
-        root.querySelectorAll(".reaction-edit").forEach((button) => button.addEventListener("click", () => startReactionEdit(button.dataset.post)));
-        root.querySelectorAll(".reaction-remove").forEach((button) => button.addEventListener("click", () => removeReactionPost(button.dataset.post)));
-      }
-
-      function startReactionEdit(postId) {
-        const post = (state.reactionPosts || []).find((item) => String(item.postId) === String(postId));
-        if (!post) return;
-        state.reactionEditId = post.postId;
-        $("reaction-channel").value = String(post.channelId || "");
-        $("reaction-style").value = post.useEmbed ? "embed" : "plain";
-        $("reaction-title").value = post.title || "";
-        $("reaction-message").value = post.message || "";
-        $("reaction-remove-on-unreact").checked = post.removeOnUnreact !== false;
-        $("reaction-entries").innerHTML = "";
-        (post.entries || []).forEach((entry) => addReactionEntry(entry.emoji, entry.roleId, entry.action));
-        if (!(post.entries || []).length) addReactionEntry();
-        $("reaction-edit-state").textContent = "Editing post";
-        $("reaction-edit-state").className = "tag warn";
-        $("reaction-submit").textContent = "Save changes";
-        $("reaction-cancel-edit").classList.remove("hidden");
-        updateReactionStyle();
-        $("reaction-form").scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-
-      function cancelReactionEdit() {
-        state.reactionEditId = null;
-        $("reaction-form").reset();
-        $("reaction-entries").innerHTML = "";
-        addReactionEntry();
-        $("reaction-edit-state").textContent = "New post";
-        $("reaction-edit-state").className = "tag muted";
-        $("reaction-submit").textContent = "Publish post";
-        $("reaction-cancel-edit").classList.add("hidden");
-        updateReactionStyle();
-      }
-
-      async function removeReactionPost(postId) {
-        if (!confirm("Remove this reaction role post and delete its Discord message? Members keep the roles they already picked.")) return;
-        try {
-          await api(`/api/guilds/${encodeURIComponent(state.guildId)}/reaction-roles/${encodeURIComponent(postId)}?deleteMessage=true`, { method: "DELETE" });
-          showToast("Reaction role post removed.");
-          if (String(state.reactionEditId) === String(postId)) cancelReactionEdit();
-          await loadReactionRoles();
-        } catch (error) { showToast(friendlyError(error.message), true); }
-      }
-
-      function insertReactionLegend() {
-        const lines = readReactionEntries().filter((entry) => entry.emoji).map((entry) => {
-          const name = roleName(entry.roleId) || (entry.roleId ? "role not found" : "no role chosen");
-          // "🎮 → Gaming" for a give pair, "🔕 → removes Events" for a
-          // remove pair: the arrow reads as "this reaction does X".
-          return `- ${entry.emoji} → ${entry.action === "remove" ? "removes " : ""}${name}`;
-        });
-        if (!lines.length) { showToast("Add an emoji and role pair first.", true); return; }
-        const area = $("reaction-message");
-        const block = `React to choose a role:\n${lines.join("\n")}`;
-        area.value = area.value.trim() ? `${area.value.replace(/\s+$/, "")}\n${block}` : block;
-        area.focus();
-        area.setSelectionRange(area.value.length, area.value.length);
-        scheduleReactionPreview();
-      }
-
-      $("reaction-style").addEventListener("change", updateReactionStyle);
-      $("reaction-title").addEventListener("input", () => { refreshReactionPreview(); });
-      $("reaction-add-entry").addEventListener("click", () => { addReactionEntry(); scheduleReactionPreview(); });
-      $("reaction-insert-legend").addEventListener("click", insertReactionLegend);
-      $("reaction-cancel-edit").addEventListener("click", cancelReactionEdit);
-      $("refresh-reaction-roles").addEventListener("click", () => loadReactionRoles().catch((error) => showToast(friendlyError(error.message), true)));
-      document.querySelectorAll("#reaction-quick-emoji button").forEach((button) => {
-        button.addEventListener("click", () => { addReactionEntry(button.dataset.emoji || ""); scheduleReactionPreview(); });
-      });
-
-      $("reaction-form").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const entries = [];
-        for (const row of reactionEntryRows()) {
-          const emoji = row.querySelector(".reaction-emoji").value.trim();
-          const roleId = row.querySelector(".reaction-role").value;
-          if (!emoji && !roleId) continue;
-          if (!emoji || !roleId) { showToast("Every pair needs both an emoji and a role.", true); return; }
-          entries.push({ emoji, roleId, action: row.querySelector(".reaction-action").value });
-        }
-        if (!entries.length) { showToast("Add at least one emoji and role pair.", true); return; }
-
-        const payload = {
-          channelId: $("reaction-channel").value,
-          useEmbed: $("reaction-style").value !== "plain",
-          title: $("reaction-title").value,
-          message: $("reaction-message").value,
-          removeOnUnreact: $("reaction-remove-on-unreact").checked,
-          entries,
-        };
-        const button = event.submitter || $("reaction-submit");
-        button.disabled = true;
-        try {
-          if (state.reactionEditId) {
-            await api(`/api/guilds/${encodeURIComponent(state.guildId)}/reaction-roles/${encodeURIComponent(state.reactionEditId)}`, { method: "POST", body: JSON.stringify(payload) });
-            showToast("Reaction role post updated.");
-          } else {
-            await api(`/api/guilds/${encodeURIComponent(state.guildId)}/reaction-roles`, { method: "PUT", body: JSON.stringify(payload) });
-            showToast("Reaction role post published.");
-          }
-          cancelReactionEdit();
-          await loadReactionRoles();
-        } catch (error) { showToast(friendlyError(error.message), true); }
-        finally { button.disabled = false; }
-      });
-
       $("settings-form").addEventListener("submit", async (event) => {
         event.preventDefault(); const button = event.submitter; button.disabled = true;
         try {
@@ -1618,135 +760,6 @@
       $("refresh-warnings").addEventListener("click", () => loadWarnings().catch((e) => showToast(friendlyError(e.message), true)));
       $("refresh-history").addEventListener("click", () => loadHistory().catch((e) => showToast(friendlyError(e.message), true)));
 
-
-      // ---- Tickets ------------------------------------------------------ //
-      // Everything these pages do is a staff action: the routes live behind the
-      // dashboard token, and the bot re-checks permissions inside every button
-      // handler it publishes. Members have no equivalent page or command.
-      function ticketModeLabel(mode) { return mode === "channel" ? "Private channel" : "Private thread"; }
-
-      function renderTicketCategories() {
-        const settings = state.ticketSettings || {};
-        const categories = settings.categories || [];
-        $("ticket-category-total").textContent = `${categories.length} categor${categories.length === 1 ? "y" : "ies"}`;
-        const root = $("ticket-category-list");
-        if (!categories.length) {
-          root.innerHTML = `<div class="empty"><strong>No categories yet</strong>Add one on the right, then publish the panel.</div>`;
-          return;
-        }
-        root.innerHTML = `<table><thead><tr><th>Button</th><th>Mode</th><th>Staff role</th><th>Opens with</th><th>Action</th></tr></thead><tbody>${categories.map((category) => `
-          <tr>
-            <td><strong>${escapeHtml(category.emoji ? `${category.emoji} ` : "")}${escapeHtml(category.label)}</strong>${category.description ? `<div class="subtle">${escapeHtml(category.description)}</div>` : ""}</td>
-            <td>${escapeHtml(category.mode ? ticketModeLabel(category.mode) : `Default (${ticketModeLabel(settings.mode)})`)}</td>
-            <td>${category.staffRoleName ? escapeHtml(category.staffRoleName) : "<span class=\"subtle\">Server staff role</span>"}</td>
-            <td>${category.askSubject ? "Subject prompt" : "Straight in"}</td>
-            <td><button class="btn secondary small ticket-category-edit" data-category="${escapeHtml(category.categoryId)}" type="button">Edit</button> <button class="btn danger small ticket-category-remove" data-category="${escapeHtml(category.categoryId)}" type="button">Remove</button></td>
-          </tr>`).join("")}</tbody></table>`;
-        root.querySelectorAll(".ticket-category-edit").forEach((button) => button.addEventListener("click", () => startTicketCategoryEdit(button.dataset.category)));
-        root.querySelectorAll(".ticket-category-remove").forEach((button) => button.addEventListener("click", () => removeTicketCategory(button.dataset.category)));
-      }
-
-      function startTicketCategoryEdit(categoryId) {
-        const category = (state.ticketSettings?.categories || []).find((item) => item.categoryId === categoryId);
-        if (!category) return;
-        $("ticket-category-label").value = category.label || "";
-        $("ticket-category-emoji").value = category.emoji || "";
-        $("ticket-category-role").value = category.staffRoleId || "";
-        $("ticket-category-mode").value = category.mode || "";
-        $("ticket-category-description").value = category.description || "";
-        $("ticket-category-subject").value = String(category.askSubject !== false);
-        $("ticket-category-ping").value = String(category.pingStaff !== false);
-        $("ticket-category-state").textContent = `Editing ${category.label}`;
-        $("ticket-category-label").dataset.category = category.categoryId;
-        $("ticket-category-label").focus();
-      }
-
-      function cancelTicketCategoryEdit() {
-        delete $("ticket-category-label").dataset.category;
-        $("ticket-category-form").reset();
-        $("ticket-category-state").textContent = "New category";
-      }
-
-      async function removeTicketCategory(categoryId) {
-        try {
-          await api(`/api/guilds/${encodeURIComponent(state.guildId)}/tickets/categories/${encodeURIComponent(categoryId)}`, { method: "DELETE" });
-          showToast("Category removed. Publish the panel to update the buttons.");
-          await loadTickets();
-        } catch (error) { showToast(friendlyError(error.message), true); }
-      }
-
-      function renderTickets() {
-        const tickets = state.tickets || [];
-        $("ticket-total").textContent = `${tickets.length} shown`;
-        const root = $("ticket-table");
-        if (!tickets.length) {
-          root.innerHTML = `<div class="empty"><strong>No tickets here</strong>Members open them from the panel buttons.</div>`;
-          return;
-        }
-        root.innerHTML = `<table><thead><tr><th>Ticket</th><th>Member</th><th>Category</th><th>Mode</th><th>Status</th><th>Claimed</th><th>Opened</th><th>Action</th></tr></thead><tbody>${tickets.map((ticket) => `
-          <tr>
-            <td>${ticket.jumpUrl ? `<a href="${escapeHtml(ticket.jumpUrl)}" target="_blank" rel="noopener">${escapeHtml(ticket.location)}</a>` : escapeHtml(ticket.location)}<div class="subtle">#${String(ticket.number || 0).padStart(4, "0")}</div></td>
-            <td>&lt;@${escapeHtml(ticket.userId)}&gt;</td>
-            <td>${escapeHtml(ticket.categoryLabel)}</td>
-            <td>${escapeHtml(ticketModeLabel(ticket.mode))}</td>
-            <td>${escapeHtml(ticket.status)}</td>
-            <td>${ticket.claimedBy ? `&lt;@${escapeHtml(ticket.claimedBy)}&gt;` : "<span class=\"subtle\">—</span>"}</td>
-            <td>${escapeHtml(formatDate(ticket.createdAt))}</td>
-            <td>
-              ${ticket.status === "closed"
-                ? `<button class="btn secondary small ticket-reopen" data-ticket="${escapeHtml(ticket.id)}" type="button">Reopen</button>`
-                : `<button class="btn secondary small ticket-close" data-ticket="${escapeHtml(ticket.id)}" type="button">Close</button>`}
-              <button class="btn danger small ticket-delete" data-ticket="${escapeHtml(ticket.id)}" type="button">Delete</button>
-            </td>
-          </tr>`).join("")}</tbody></table>`;
-        root.querySelectorAll(".ticket-close").forEach((button) => button.addEventListener("click", () => closeTicket(button.dataset.ticket)));
-        root.querySelectorAll(".ticket-reopen").forEach((button) => button.addEventListener("click", () => reopenTicket(button.dataset.ticket)));
-        root.querySelectorAll(".ticket-delete").forEach((button) => button.addEventListener("click", () => deleteTicket(button.dataset.ticket)));
-      }
-
-      async function loadTickets() {
-        if (!state.guildId) return;
-        const status = $("ticket-status-filter").value || "all";
-        const result = await api(`/api/guilds/${encodeURIComponent(state.guildId)}/tickets?status=${encodeURIComponent(status)}`);
-        state.ticketSettings = result.settings || {};
-        state.tickets = result.tickets || [];
-        const panel = state.ticketSettings.panel || {};
-        $("ticket-panel-state").textContent = panel.messageId ? "Published" : "Not published";
-        $("ticket-panel-state").classList.toggle("success", Boolean(panel.messageId));
-        $("ticket-panel-state").classList.toggle("muted", !panel.messageId);
-        $("ticket-mode").value = state.ticketSettings.mode || "thread";
-        fillSelect("ticket-log-channel", state.detail?.channels || [], state.ticketSettings.logChannelId, "Use the configured staff channel");
-        fillSelect("ticket-category", state.detail?.categories || [], state.ticketSettings.categoryId, "Same category as the panel");
-        fillSelect("ticket-panel-channel", state.detail?.channels || [], panel.channelId, "Choose a text channel");
-        if (panel.title) $("ticket-panel-title").value = panel.title;
-        if (panel.description) $("ticket-panel-description").value = panel.description;
-        fillSelect("ticket-category-role", state.detail?.roles || [], null, "Server staff role");
-        renderTicketCategories();
-        renderTickets();
-      }
-
-      async function closeTicket(ticketId) {
-        const reason = window.prompt("Reason for closing this ticket (optional):") || "";
-        try {
-          await api(`/api/guilds/${encodeURIComponent(state.guildId)}/tickets/${encodeURIComponent(ticketId)}/close`, { method: "POST", body: JSON.stringify({ reason }) });
-          showToast("Ticket closed."); await loadTickets();
-        } catch (error) { showToast(friendlyError(error.message), true); }
-      }
-
-      async function reopenTicket(ticketId) {
-        try {
-          await api(`/api/guilds/${encodeURIComponent(state.guildId)}/tickets/${encodeURIComponent(ticketId)}/reopen`, { method: "POST", body: "{}" });
-          showToast("Ticket reopened."); await loadTickets();
-        } catch (error) { showToast(friendlyError(error.message), true); }
-      }
-
-      async function deleteTicket(ticketId) {
-        if (!window.confirm("Delete this ticket? The thread/channel is removed from Discord and the record is deleted.")) return;
-        try {
-          await api(`/api/guilds/${encodeURIComponent(state.guildId)}/tickets/${encodeURIComponent(ticketId)}`, { method: "DELETE" });
-          showToast("Ticket deleted."); await loadTickets();
-        } catch (error) { showToast(friendlyError(error.message), true); }
-      }
 
       // ---- Applications ------------------------------------------------- //
       function applicationQuestionRow(question = {}) {
@@ -1916,65 +929,6 @@
       }
 
       // ---- Wiring ------------------------------------------------------- //
-      $("refresh-tickets").addEventListener("click", () => loadTickets().catch((error) => showToast(friendlyError(error.message), true)));
-      $("ticket-status-filter").addEventListener("change", () => loadTickets().catch((error) => showToast(friendlyError(error.message), true)));
-      $("ticket-category-cancel").addEventListener("click", cancelTicketCategoryEdit);
-      $("ticket-settings-save").addEventListener("click", async (event) => {
-        const button = event.currentTarget; button.disabled = true;
-        try {
-          await api(`/api/guilds/${encodeURIComponent(state.guildId)}/tickets/settings`, {
-            method: "PUT",
-            body: JSON.stringify({
-              mode: $("ticket-mode").value,
-              logChannelId: $("ticket-log-channel").value || null,
-              categoryId: $("ticket-category").value || null,
-            }),
-          });
-          showToast("Ticket settings saved."); await loadTickets();
-        } catch (error) { showToast(friendlyError(error.message), true); }
-        finally { button.disabled = false; }
-      });
-      $("ticket-panel-form").addEventListener("submit", async (event) => {
-        event.preventDefault(); const button = event.submitter; button.disabled = true;
-        try {
-          await api(`/api/guilds/${encodeURIComponent(state.guildId)}/tickets/panel`, {
-            method: "POST",
-            body: JSON.stringify({
-              channelId: $("ticket-panel-channel").value,
-              title: $("ticket-panel-title").value.trim() || null,
-              description: $("ticket-panel-description").value.trim() || null,
-            }),
-          });
-          showToast("Ticket panel published."); await loadTickets();
-        } catch (error) { showToast(friendlyError(error.message), true); }
-        finally { button.disabled = false; }
-      });
-      $("ticket-panel-refresh").addEventListener("click", () => {
-        $("ticket-panel-title").value = state.ticketSettings?.panel?.title || "";
-        $("ticket-panel-description").value = state.ticketSettings?.panel?.description || "";
-      });
-      $("ticket-category-form").addEventListener("submit", async (event) => {
-        event.preventDefault(); const button = event.submitter; button.disabled = true;
-        const editing = $("ticket-category-label").dataset.category || null;
-        try {
-          await api(`/api/guilds/${encodeURIComponent(state.guildId)}/tickets/categories`, {
-            method: "POST",
-            body: JSON.stringify({
-              categoryId: editing,
-              label: $("ticket-category-label").value.trim(),
-              emoji: $("ticket-category-emoji").value.trim() || null,
-              staffRoleId: $("ticket-category-role").value || null,
-              mode: $("ticket-category-mode").value || null,
-              description: $("ticket-category-description").value.trim() || null,
-              askSubject: $("ticket-category-subject").value === "true",
-              pingStaff: $("ticket-category-ping").value === "true",
-            }),
-          });
-          showToast("Category saved. Publish the panel to update the buttons.");
-          cancelTicketCategoryEdit(); await loadTickets();
-        } catch (error) { showToast(friendlyError(error.message), true); }
-        finally { button.disabled = false; }
-      });
       $("refresh-applications").addEventListener("click", () => loadApplications().catch((error) => showToast(friendlyError(error.message), true)));
       $("application-status-filter").addEventListener("change", () => loadApplications().catch((error) => showToast(friendlyError(error.message), true)));
       $("application-question-add").addEventListener("click", () => addApplicationQuestion());

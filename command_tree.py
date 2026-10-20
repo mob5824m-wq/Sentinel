@@ -9,12 +9,6 @@ Everything the bot can do hangs off one top-level group, ``/manage``::
     /manage status      server config, active punishments, member history
     /manage setup       configure this server (administrators)
     /manage fixcommands clean up duplicated slash commands (administrators)
-    /manage rules …     publish rule sets and their acceptance role (admins)
-    /manage tickets panel      set the options and publish the panel (admins)
-    /manage tickets category   list / add / edit / remove a panel button (admins)
-    /manage tickets console    work the ticket queue: claim, close, reopen (staff)
-    /manage tickets view       view one ticket by number or channel id (staff)
-    /manage tickets claim      accept responsibility for one ticket (staff)
     /manage applications form    list / create / edit / delete a form (admins)
     /manage applications panel   publish an Apply panel (admins)
     /manage applications review  read submissions and approve or deny (staff)
@@ -22,34 +16,31 @@ Everything the bot can do hangs off one top-level group, ``/manage``::
     /manage applications accept  approve one submission directly (staff)
     /manage applications decide  approve or deny one by id (staff)
     /apply              fill in an application form (every member)
-    /ticket             open a ticket (every member)
 
 The group object lives in its own module because two places need it:
 
 * :mod:`bot` owns the cog that Discord sees, so it owns registration of the
   group (only a command whose ``parent`` is ``None`` is registered by
   ``Cog``);
-* :mod:`rules` attaches its ``/manage rules`` sub-group to it with
-  ``parent=manage_group``, so the rules commands are defined next to the
-  helpers they use instead of being moved into bot.py.
+* a feature module can attach its own sub-group to it with
+  ``parent=manage_group``, so its commands are defined next to the helpers they
+  use instead of being moved into bot.py. :mod:`applications` does exactly
+  that.
 
-Sub-command callbacks are bound to whichever cog owns the group, so the rules,
-tickets and applications commands are mixed into that same cog (see
-:class:`rules.RulesMixin`, :class:`tickets.TicketMixin` and
+Sub-command callbacks are bound to whichever cog owns the group, so the
+application commands are mixed into that same cog (see
 :class:`applications.ApplicationsMixin`).
 
-The ticket and application commands support both queue workflows and direct
-lookups: ``/manage tickets console`` or ``view`` to read tickets, ``claim`` to
-take one, ``/manage applications review`` or ``view`` to read submissions,
-and ``accept`` or ``decide`` to record an outcome. Queue messages are ephemeral
-and their selects and buttons call the same permission-checked handlers as the
-direct commands.
+The application commands support both queue workflows and direct lookups:
+``/manage applications review`` or ``view`` to read submissions, and ``accept``
+or ``decide`` to record an outcome. Queue messages are ephemeral and their
+selects and buttons call the same permission-checked handlers as the direct
+commands.
 
-``/apply`` and ``/ticket`` are deliberately *not* children of this group: they
-are the commands a normal member must be able to see, and all they do is open a
-modal (or a category picker). Reading or deciding anything always goes through
-the group (and through a permission re-check), which is what keeps "members can
-apply but not view or edit" true.
+``/apply`` is deliberately *not* a child of this group: it is the command a
+normal member must be able to see, and all it does is open a modal. Reading or
+deciding anything always goes through the group (and through a permission
+re-check), which is what keeps "members can apply but not view or edit" true.
 
 Discord only honours ``default_member_permissions`` on the *top-level*
 command, and Sentinel leaves it unset (the group is visible to everyone in the
@@ -57,9 +48,9 @@ server). A role is not expressible as a permission, and hiding ``/manage``
 behind *Moderate Members* would hide it from staff-role holders who lack that
 permission — so each command decides for itself when it runs: moderation needs
 the configured staff role (or Administrator, see
-:func:`settings.moderation_denial`), ``setup``/``fixcommands``/``rules`` need
-Administrator (:func:`is_administrator`), and the ticket and application
-commands re-check their own staff rules.
+:func:`settings.moderation_denial`), ``setup`` and ``fixcommands`` need
+Administrator (:func:`is_administrator`), and the application commands
+re-check their own staff rules.
 """
 
 from __future__ import annotations
@@ -74,7 +65,7 @@ MANAGE_GROUP_NAME = "manage"
 
 manage_group = app_commands.Group(
     name=MANAGE_GROUP_NAME,
-    description="Server management: moderation, setup, rules and reaction roles.",
+    description="Server management: moderation, setup and applications.",
     # Every command targets a specific server, so never offer them in DMs.
     guild_only=True,
 )

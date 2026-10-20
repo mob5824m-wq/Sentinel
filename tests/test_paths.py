@@ -54,18 +54,22 @@ class _Sandbox:
         for d in (self.home, self.app, self.bundle):
             d.mkdir(parents=True)
         for name in (
-            "bot.py", "paths.py", "rules.py", "reaction_roles.py",
-            "discord_markdown.py", "dashboard.py", "dashboard.html",
+            "bot.py", "paths.py",
+            "dashboard.py", "dashboard.html",
             "installer.py",
-            # The shared /manage group: bot.py and rules.py both import it.
+            # The shared /manage group: a feature module attaches its sub-group
+            # to it without importing bot.py.
             "command_tree.py",
             # DuckDNS updater: imported by bot.py, so it ships in the bundle.
             "duckdns.py",
+            # One-time cleanup of what the removed rules / reaction-role /
+            # ticket features left behind: imported by bot.py.
+            "legacy_cleanup.py",
             # Shared SQLite helpers and per-guild config lookups: bot.py and
-            # the tickets/applications modules all import them.
+            # the applications module both import them.
             "store.py", "settings.py",
-            # Ticket and application systems, imported by bot.py.
-            "tickets.py", "applications.py",
+            # Application system, imported by bot.py.
+            "applications.py",
         ):
             shutil.copy2(REPO_ROOT / name, self.bundle / name)
         if not app_writable:
@@ -188,10 +192,11 @@ class ReadOnlyAppDirTests(unittest.TestCase):
         leftovers = sorted(
             p.name for p in self.sb.bundle.iterdir()
             if p.name not in {
-                "bot.py", "paths.py", "rules.py", "reaction_roles.py",
-                "discord_markdown.py", "dashboard.py", "dashboard.html",
+                "bot.py", "paths.py",
+                "dashboard.py", "dashboard.html",
                 "installer.py", "command_tree.py", "duckdns.py",
-                "store.py", "settings.py", "tickets.py", "applications.py",
+                "legacy_cleanup.py",
+                "store.py", "settings.py", "applications.py",
                 "__pycache__",
             }
         )

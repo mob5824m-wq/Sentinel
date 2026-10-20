@@ -91,10 +91,10 @@ Priority: optional
 Architecture: ${ARCH}
 Depends: libc6 (>= ${GLIBC_FLOOR})
 Maintainer: Arena <noreply@arena.ai>
-Description: Discord server management bot (moderation, rules, roles).
+Description: Discord server management bot (moderation, applications).
  Sentinel manages a Discord server from one /manage command tree:
- timed punishment roles, warnings, rules posts with reaction-role
- acceptance, reaction-role menus, and an authenticated web dashboard.
+ timed punishment roles, warnings, application forms with review
+ panels, and an authenticated web dashboard.
 Homepage: https://github.com/mob5824m-wq/Sentinel
 EOF
 

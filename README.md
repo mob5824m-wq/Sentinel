@@ -1,18 +1,17 @@
 # Sentinel
 
 A cross-platform [discord.py](https://discordpy.readthedocs.io/) server
-management bot: timed punishment roles, warnings, a published rules post with
-reaction-role acceptance, reaction-role menus, and an authenticated
-server-side web dashboard for managing connected servers, moderation,
-warnings, rules, configuration and history.
+management bot: timed punishment roles, warnings, application forms, and an
+authenticated server-side web dashboard for managing connected servers,
+moderation, warnings, applications, configuration and history.
 
 Everything is one slash-command tree, `/manage` — so a moderator can learn the
 whole bot by typing `/manage` and reading the list:
 
 ```
-/manage punish        /manage warnings     /manage rules publish
-/manage pardon        /manage status       /manage rules disable
-/manage warn          /manage setup        /manage rules list
+/manage punish        /manage warnings     /manage applications form
+/manage pardon        /manage status       /manage applications panel
+/manage warn          /manage setup        /manage applications review
                                            /manage fixcommands
 ```
 
@@ -66,10 +65,9 @@ While no staff role is configured yet, moderation falls back to the old rule
 (*Moderate Members* or *Manage Server*) so a fresh install keeps working; the
 refusal message points at `/manage setup staff_role:`.
 
-The administrative commands — `/manage setup`, `/manage fixcommands` and
-everything under `/manage rules` — check for **Administrator** when they run.
-Ticket and application management re-check their own staff rules. See
-[Commands](#5-commands).
+The administrative commands — `/manage setup` and `/manage fixcommands` — check
+for **Administrator** when they run. Application management re-checks its own
+staff rules. See [Commands](#5-commands).
 
 > **Quick start** — pick one:
 >
@@ -165,7 +163,7 @@ migration, so give it five minutes:
 
 | What changed                        | What to do |
 |-------------------------------------|------------|
-| Commands moved under `/manage`      | Nothing: the new tree is synced to every connected server at startup. `/punish apply` is now `/manage punish`, `/setup` is `/manage setup`, `/rules …` is `/manage rules …`. |
+| Commands moved under `/manage`      | Nothing: the new tree is synced to every connected server at startup. `/punish apply` is now `/manage punish`, `/setup` is `/manage setup`. |
 | Data moved to a `sentinel` directory (`/var/lib/sentinel`, `~/Library/Application Support/Sentinel`, `%LOCALAPPDATA%\Sentinel`, …) | Copy the old `config.json` and `punishments.db` into the new data dir, or re-run `sentinel --install`. |
 | Service names are `sentinel` / `com.arena.sentinel` | Uninstall the old service first (`sudo punishment-manager --uninstall-service`), then `sudo sentinel --install-service`. |
 | Environment variables are `SENTINEL_*` (were `PUNISHMENT_MANAGER_*`) | Update service units, containers and scripts. |
@@ -181,19 +179,19 @@ names any location it had to fall back to.
 * A Discord application + bot token — see
   <https://discord.com/developers/applications>.
 * The bot must be invited with at minimum:
-  * **Manage Roles** *(for punishment and rules-acceptance roles)*
+  * **Manage Roles** *(for the punishment roles and application roles)*
   * **Moderate Members** *(not required: moderation is gated by the staff
     role. It is the fallback rule on servers that have not set one yet.)*
-  * **Send Messages** *(for staff-channel embeds and rules posts)*
-  * **Embed Links** and **Add Reactions** *(for rules posts)*
+  * **Send Messages** *(for staff-channel embeds and application panels)*
+  * **Embed Links** *(for application panels)*
   * **Use Application Commands**
 
 Enable **Server Members Intent** in the Discord Developer Portal under
 *Bot → Privileged Gateway Intents*; the bot uses it for member/role updates.
 
-> **Role order matters.** Drag the bot's role *above* the punish, post-punish,
-> and rules-acceptance roles in *Server Settings → Roles*, otherwise it cannot
-> give or take them.
+> **Role order matters.** Drag the bot's role *above* the punish, post-punish
+> and application roles in *Server Settings → Roles*, otherwise it cannot give
+> or take them.
 
 ---
 
@@ -400,185 +398,6 @@ works too — it re-runs the installer whenever no token is configured.)
    `staff_role`, `staff_channel`, and `dm_user` are optional; the two
    role arguments are required.
 
-### Configure rules and a reaction role
-
-1. Create a basic `Verified` / `Member` role. Keep it below the bot's role and
-   do not give it moderation or server-management permissions.
-2. As a server administrator, publish the rules:
-
-   ```text
-   /manage rules publish channel:#rules role:@Verified rules_text:"1. Be respectful. 2. No spam or harassment."
-   ```
-
-   The bot posts this message, an embed containing the rules, and adds a ✅
-   reaction:
-
-   > By reacting to this you acknowledge the rules and will abide by them.
-
-   Members who react receive the configured role; removing their reaction
-   removes that role. Publishing again under the same name replaces that set's
-   post. Existing role assignments are not changed by republishing; if you
-   change the acceptance role, remove the old role from existing members as
-   needed. `/manage rules disable` turns off reaction handling for a set and leaves
-   assignments unchanged.
-
-#### Several rule sets on one server
-
-A server can run more than one rule set — a full "Zone rules" post plus a
-short "Event rules" or "Contest rules" post, each with its own channel, role
-and text. Give each set a name and it stays independent:
-
-```text
-/manage rules publish channel:#rules role:@Verified name:"Zone rules" rules_text:"1. Be respectful. 2. No spam."
-/manage rules publish channel:#events role:@Events name:"Event rules" rules_text:"1. Keep chat on topic. 2. No spoilers."
-```
-
-* `/manage rules publish` with an existing name (case-insensitive) replaces only that
-  set's post; other sets are untouched. The default name — used when you leave
-  the name out — is `Zone rules`, so an unnamed post is the default set.
-* **A name you type is kept exactly as written.** Nothing normalises it towards
-  the default: name a set `Server rules` (the default of older versions) and it
-  stays `Server rules`, stored, listed and titled as "Your Server — Server
-  rules". Only a name matching the current default, `Zone rules`, gets the
-  short "Your Server Rules" title.
-* `/manage rules disable name:"Event rules"` disables one set — its post is marked
-  disabled and its ✅ is removed, but roles already granted are left alone.
-  With only one set published, `name` can be omitted.
-* `/manage rules list` shows every set, its channel, its role and its message id.
-* Reactions are routed by message, so ✅ on the "Event rules" post grants the
-  events role and never the server-rules role.
-* Up to 25 sets per server.
-
-The prompt sentence lives in `rules.py` as `RULES_POST_CONTENT`, so
-`/manage rules publish` and the dashboard's publish button always post the same
-wording (edit it there to change it everywhere). Rules text can be up to
-4,096 characters. The bot stores every set per server in `config.json`; no
-manual config edit is needed, and a config written by an older version (a
-single object instead of a list, no names) keeps working as one set named
-`Zone rules` — sets that do carry a name keep it untouched.
-
-The rules post is sent with mentions disabled, so no `@` in the rules can ping
-anyone, and the post is only edited or deleted by the bot itself.
-
-In the dashboard, the **Rules & reactions** page lists every published rule set
-with **Edit** (rename it, move it to another channel, change the role, or
-rewrite the text — the message is updated in place) and **Disable**, and the
-editor below publishes a new one.
-
-Need more than one reaction role per post, or a custom message of your own?
-See [Reaction role menus](#reaction-role-menus-dashboard) below.
-
-#### Markdown in the rules
-
-The rules text is regular Discord Markdown, rendered by Discord's own client.
-Anything Discord supports inside an embed works:
-
-| Syntax | Result |
-|--------|--------|
-| `**bold**`, `*italic*` / `_italic_`, `__underline__`, `~~strikethrough~~`, `\|\|spoiler\|\|` | inline formatting |
-| `# Heading`, `## Heading`, `### Heading` | headings (`####` and more are shown as text) |
-| `- item`, `* item`, `1. item` | bulleted / numbered lists |
-| `> quote`, `>>> quote` | block quotes (the second quotes everything after it) |
-| `` `code` ``, ```` ```code``` ```` | inline code and code blocks |
-| `[label](https://example.com)`, `<https://example.com>` | clickable links |
-| `-# small note` | subtext |
-| `<@user>`, `<@&role>`, `<#channel>` | mentions (rendered, never pinged) |
-
-Discord does **not** render tables, images, task lists, horizontal rules
-(`---`), `####`+ headings or nested lists inside an embed — those are shown
-literally, so the bot's preview does not pretend otherwise.
-
-**In the dashboard.** The Rules page has a formatting toolbar (bold, italic,
-underline, strikethrough, spoiler, headings, lists, quote, code, code block,
-link — with `Ctrl`/`Cmd` + `B`, `I`, `E` shortcuts) and a **live preview** that
-shows the whole post exactly as Discord renders it: the prompt message, the
-embed body, the embed title and the footer. The preview is rendered by the bot
-(`discord_markdown.py`) rather than the browser, so what you see is what the
-published post looks like. While you
-type, the editor also flags syntax Discord would show as plain text — an
-unclosed `**`, a `####` heading, a missing space after `#`, or a non-http link.
-
-<sub>Want to verify the renderer without the browser?</sub>
-
-```bash
-python3 -c "from discord_markdown import render_markdown_html; print(render_markdown_html('# Rules\n**be kind**'))"
-```
-
-### Reaction role menus (dashboard)
-
-The rules post grants one role for one ✅. For anything more — a ping-picker, a
-colour menu, an events role — open the dashboard's **Rules & reactions** page
-and use the **Reaction role posts** section. There is no limit on the number of
-posts; each one is a separate bot message with its own mapping.
-
-1. Pick the **post channel**.
-2. Choose the **post style**: an embed (optional title + text) or a plain
-   message.
-3. Write the **message** members will read. It is regular Discord Markdown —
-   the same formatting toolbar, live preview and linter as the rules editor —
-   and it is posted with mentions disabled, so nothing in it can ping anyone.
-   Leave it empty to publish the default prompt
-   (`React with an emoji below to add or remove a role.`).
-4. Add the **emoji → role pairs** (up to 20 per post). Type or paste any emoji,
-   or a custom emoji as `name:id` / `<:name:id>`; the quick-add row and
-   **Insert emoji list** button write the role key into the message for you.
-5. Pick what each pair **does** when someone reacts:
-
-   | Action | Reacting | Un-reacting |
-   |--------|----------|-------------|
-   | **Give role** (default) | hands the member the role | takes it back |
-   | **Remove role** | strips the role from the member | hands it back |
-
-   *Give* is the ping-picker case. *Remove* is the opt-out case: an
-   "🔕 react to stop being pinged for events" emoji, or a "clear my own
-   access" reaction. Give and remove pairs mix freely on one post, and a
-   member who never reacts is never touched — the bot only ever changes the
-   role of the person who reacted.
-
-6. Press **Publish post**. The bot posts the message and adds every reaction.
-
-Un-reacting reverses whatever the pair did, whether it gave or removed the
-role, unless **Undo the change when a member removes their reaction** is
-cleared for that post (then reactions are one-way: they apply once and
-un-reacting does nothing). Roles are validated exactly like the acceptance
-role: they must sit below the bot's role, must not be managed by an
-integration, and must not carry moderation or server-management permissions.
-
-Each post listed under **Published reaction role posts** has **Edit** (change
-the text, the pairs, or the style — the message is updated in place and the
-reactions are re-synced) and **Remove** (drops the configuration and deletes
-the bot's message). Moving a post to another channel reposts it. Members keep
-any role they already picked, so removing a pair or a post never strips roles —
-take them off manually if that is what you want. If the Discord message is
-deleted, the next **Save changes** posts a fresh one under the same entry.
-
-The mapping is stored per server in `config.json` under `reaction_roles`, next
-to `rules`, so it survives restarts:
-
-```json
-"reaction_roles": {
-  "987654321098765432": [
-    {
-      "post_id": "6f1c0b3a",
-      "channel_id": 111111111111111111,
-      "message_id": 222222222222222222,
-      "title": "Choose your roles",
-      "message": "React below to pick your pings.",
-      "use_embed": true,
-      "remove_on_unreact": true,
-      "entries": [
-        { "emoji": "🎮", "role_id": 333333333333333333, "action": "add" },
-        { "emoji": "🔕", "role_id": 444444444444444444, "action": "remove" }
-      ]
-    }
-  ]
-}
-```
-
-`action` is `add` (give the role on react) or `remove` (take it away on
-react); an entry without the key is treated as `add`, so menus written by
-older versions keep working unchanged.
-
 ### Option C — edit `config.json` directly
 
 ```json
@@ -590,8 +409,6 @@ older versions keep working unchanged.
   "staff_role_id":    555555555555555555,
   "staff_channel_id": 444444444444444444,
   "dm_user":          true,
-  "rules":            {},
-  "tickets":          {},
   "applications":     {},
   "dashboard_enabled": true,
   "dashboard_host":    "127.0.0.1",
@@ -601,27 +418,23 @@ older versions keep working unchanged.
 
 The `bot_token`, `server_id`, and role ids go at the top level
 (single-server shape). `server_id` is optional for command syncing; if it is
-omitted, use `/manage setup` to associate role settings with each server. The bot
-fills the `rules` map when a rule set is published (a list of named sets per
-server), the `reaction_roles` map when a reaction-role post is published from
-the dashboard, `tickets` when a ticket panel or category is configured, and
-`applications` when an application form is created — all per server. It also
-generates `dashboard_token` on first startup. Keep `config.json` private; it contains
-credentials. The `guilds`, `token`, and `log_channel_id` keys are a legacy
-multi-server shape and are still respected for backwards compatibility.
+omitted, use `/manage setup` to associate role settings with each server. The
+bot fills the `applications` map when an application form is created — per
+server. It also generates `dashboard_token` on first startup. Keep
+`config.json` private; it contains credentials. The `guilds`, `token`, and
+`log_channel_id` keys are a legacy multi-server shape and are still respected
+for backwards compatibility.
 
-Publishing rule sets from Discord or the dashboard fills `rules` like this:
+Creating a form from Discord or the dashboard fills `applications` like this:
 
 ```json
-"rules": {
+"applications": {
   "987654321098765432": [
     {
-      "ruleset_id": "6f1c0b3a",
-      "name": "Zone rules",
-      "channel_id": 111111111111111111,
-      "message_id": 222222222222222222,
-      "role_id": 333333333333333333,
-      "rules_text": "1. Be respectful."
+      "form_id": "6f1c0b3a",
+      "name": "Staff application",
+      "review_channel_id": 111111111111111111,
+      "questions": [{"label": "Why do you want to join?", "style": "paragraph"}]
     }
   ]
 }
@@ -629,6 +442,14 @@ Publishing rule sets from Discord or the dashboard fills `rules` like this:
 
 To find ids: enable Developer Mode in *Settings -> Advanced*, then
 right-click the server/role/channel and choose "Copy ... ID".
+
+> **Upgrading from a version that had rules, reaction-role menus or tickets?**
+> Those features have been removed. On the first start afterwards Sentinel
+> deletes the posts they left in your channels (rule-set posts, reaction-role
+> menus and ticket panels), drops the `tickets` database table, and removes the
+> `rules`, `reaction_roles` and `tickets` sections from `config.json`. The
+> private ticket threads and channels themselves are left alone — they hold
+> member conversations, so remove those by hand if you want them gone.
 
 ---
 
@@ -672,13 +493,10 @@ You should see:
 
 When the bot is running, open **<http://127.0.0.1:8765>** on the bot host.
 The dashboard covers connected servers, active punishments, warnings,
-pardon/apply actions, the rules post, multi-role reaction-role menus, tickets,
-application forms and submissions, server role/channel settings,
-slash-command sync, and punishment history. The **Tickets** page publishes the
-panel, edits the categories and modes, and lists every ticket with
-close/reopen/delete; the **Applications** page builds forms (questions, review
-channel, accept/remove roles), publishes Apply panels, and reads submissions
-with Approve/Deny and a decision note.
+pardon/apply actions, application forms and submissions, server role/channel
+settings, slash-command sync, and punishment history. The **Applications** page
+builds forms (questions, review channel, accept/remove roles), publishes Apply
+panels, and reads submissions with Approve/Deny and a decision note.
 
 **Finding the dashboard key.** The first startup generates a private
 dashboard key and saves it as `dashboard_token` in the bot's `config.json`.
@@ -781,10 +599,7 @@ and the admin-only `/manage fixcommands` command does the same thing on demand.
 
 ## 5. Commands
 
-Everything lives under `/manage`. Reaction-role menus are configured from
-the dashboard (see
-[Reaction role menus](#reaction-role-menus-dashboard)) rather than a command,
-since they need a message box, a live preview, and one role picker per emoji.
+Everything lives under `/manage`, plus the one member-facing command `/apply`.
 
 | Command              | Who can use it                  | What it does |
 |----------------------|---------------------------------|--------------|
@@ -793,14 +608,6 @@ since they need a message box, a live preview, and one role picker per emoji.
 | `/manage warnings`   | Staff role (or administrators) | Lists a member's recorded warnings. Pass `clear:true` to delete them all (this is logged to the staff channel). |
 | `/manage pardon`     | Staff role (or administrators) | Ends the punishment early and removes the punish / post-punish role. Posts a staff embed and DMs the member. |
 | `/manage status`     | Staff role (or administrators) | Shows the server configuration and a list of active punishments. Pass a `user` to see that member's active status, history, and warnings. |
-| `/manage rules publish`     | Server administrators           | Posts a named rule set and sets its ✅ acceptance reaction role. Publishing the same name replaces that set. |
-| `/manage rules disable`     | Server administrators           | Stops handling reactions for one rule set (pass `name` when several exist). Existing roles are unchanged. |
-| `/manage rules list`        | Server administrators           | Lists the published rule sets with their channel, role and message. |
-| `/manage tickets panel`     | Server administrators           | Sets the options (mode, log channel, ticket category) and posts or refreshes the panel. |
-| `/manage tickets category`  | Server administrators           | Lists the panel buttons when called bare; with a `label` it adds or edits one, and `remove:true` deletes it. |
-| `/manage tickets console`   | Staff (staff role or moderation permissions) | The ticket queue: a summary and a select. Pick a ticket to read it and claim, close or reopen it. |
-| `/manage tickets view`      | Staff                           | Shows one ticket's details and controls by ticket number or channel id. |
-| `/manage tickets claim`     | Staff                           | Accepts responsibility for a ticket, joins its private thread or channel, and updates its status. |
 | `/manage applications form` | Server administrators           | Lists the forms when called bare; with a `name` it creates or edits one, and `remove:true` deletes it. |
 | `/manage applications panel` | Server administrators          | Posts (or refreshes) an Apply panel for one form. |
 | `/manage applications review` | Staff                          | The review queue: a summary and a select. Pick a submission to read the answers and approve or deny it. |
@@ -810,27 +617,23 @@ since they need a message box, a live preview, and one role picker per emoji.
 | `/manage setup`             | Server administrators           | Configures the punishment roles, staff channel, and DM behavior. |
 | `/manage fixcommands`       | Server administrators           | Removes duplicated slash commands (e.g. doubled `/manage` entries) and re-syncs this server. |
 | `/apply`                    | **Every member**                | Opens the application modal. It cannot list, view or edit anything. |
-| `/ticket`                   | **Every member**                | Opens a ticket: choose a category, answer the subject box. It cannot read or edit any ticket. |
 
 ### A small command surface, on purpose
 
-Staff can work either from the queues or directly by id:
+Staff can work either from the queue or directly by id:
 
-* **Browse a queue.** `/manage tickets console` and
-  `/manage applications review` return private queue messages. Picking a record
-  shows its details and controls (Claim / Close / Reopen, or Approve / Deny).
-* **Use direct commands.** `/manage tickets view` shows a ticket card, and
-  `/manage tickets claim` accepts responsibility for it. `/manage applications view`
-  shows a submission's full answers, while `/manage applications accept`
-  approves it directly. Use `/manage applications decide` when you need to deny
-  an application or choose the decision by id. These commands use the same
-  permission-checked ticket/application handlers.
-* **List and edit share a command.** `/manage tickets category` with no options
-  lists the categories; naming one adds or edits it, and anything left out is
-  kept — so `/manage applications form name:"Staff" allow_multiple:true` changes
-  one setting without touching the questions or the review channel.
-* **Options are optional.** `/manage tickets panel` without a channel only saves
-  the settings, and with a channel only refreshes the panel, so an
+* **Browse the queue.** `/manage applications review` returns a private queue
+  message. Picking a submission shows its details and controls (Approve / Deny).
+* **Use direct commands.** `/manage applications view` shows a submission's full
+  answers, while `/manage applications accept` approves it directly. Use
+  `/manage applications decide` when you need to deny an application or choose
+  the decision by id. These commands use the same permission-checked handlers.
+* **List and edit share a command.** `/manage applications form` with no options
+  lists the forms; naming one adds or edits it, and anything left out is kept —
+  so `/manage applications form name:"Staff" allow_multiple:true` changes one
+  setting without touching the questions or the review channel.
+* **Options are optional.** `/manage applications panel` without a channel only
+  saves the settings, and with a channel only refreshes the panel, so an
   administrator never has to restate what they set last time.
 
 No row above is enforced by Discord: `/manage` carries no permission gate, so
@@ -873,87 +676,6 @@ above the bot's role) cannot be warned, and nobody can warn themselves.
 Warnings are DMed to the member and posted to the staff channel using the same
 `dm_user` / `staff_channel_id` settings as punishments.
 
-
-### Tickets
-
-Members open a ticket from a panel button, or with `/ticket`; the conversation
-stays between them and staff. There are two shapes and a server can use
-**both** — the default is chosen once, and any category can override it:
-
-| Mode | What the member gets | When to use it |
-|------|----------------------|----------------|
-| **Private thread** (default) | A private thread under the panel channel. Invite-only: the opener is added, and so is everyone holding the category's staff role (up to 20). Staff outside that group press **Claim** on the staff notice and are added. | Servers whose staff team fits in a private thread. Keeps everything in one channel, so the panel channel doubles as the ticket list. |
-| **Private channel** | Its own channel, `@everyone` denied, with the opener, the staff role and the bot allowed. | Busier servers: a role grant reaches every staff member at once, and long transcripts do not pile up in one channel. |
-
-Set it up in two steps:
-
-```text
-/manage tickets category label:"General help" emoji:❓
-/manage tickets panel channel:#open-a-ticket mode:"Private thread" log:#staff-log
-```
-
-`/manage tickets panel` is the one settings command: `mode` picks how new
-tickets open, `log` is where staff get the notice, and `parent` files
-channel-mode tickets under a Discord category. Every option is optional —
-running it with only a channel just refreshes the panel's buttons, and running
-it with only a mode changes that setting and leaves the panel where it is.
-
-* **Categories** are the panel buttons. `/manage tickets category` on its own
-  lists them; naming one adds or edits it, and options you leave out are kept,
-  so `/manage tickets category label:"General help" emoji:🎫` re-badges one
-  button without touching the rest. Each one can name its own
-  `staff_role`, its own `mode`, a description (shown in the panel's category
-  list), and whether to ask "what is this about?" before opening
-  (`ask_subject`, on by default). Up to 25 per server.
-* The **panel** is one bot message. Publishing again edits that same message,
-  so a server never accumulates stale panels. A button whose category has since
-  been deleted explains that instead of failing silently.
-* **Staff notices** go to `/manage tickets`' log channel, or — if none is
-  set — to the staff channel from `/manage setup`. The notice carries **Claim**
-  and **Close** buttons, so a staff member who is not in a private thread can
-  join it with one click.
-* Inside the ticket, the header shows who opened it, the category, the mode,
-  the status, who claimed and closed it and why, and carries **Claim**,
-  **Close** and **Reopen**.
-* **Closing** locks the ticket (`closed-…`, the opener can no longer post),
-  posts the reason, DMs the opener when `dm_user` is on, and keeps the record.
-  **Reopening** undoes it. Closing and reopening are recorded with whoever did
-  it.
-* **Claiming** marks the ticket as taken, adds the claimer to the thread and
-  announces it, so two staff members do not answer the same question.
-* Tickets are stored in SQLite with per-server numbers (`#0007`), so
-  `/manage tickets console` still lists one whose thread has been renamed,
-  archived or deleted by hand.
-
-Staff can either browse the queue or use an individual ticket number directly:
-
-```text
-/manage tickets console
-/manage tickets view ticket:#0007
-/manage tickets claim ticket:#0007
-```
-
-`view` returns a private ticket card with a link to its channel and staff
-controls. `claim` accepts the ticket for the caller, adds them to a private
-thread when needed, and records who took it.
-
-#### What a normal member can do
-
-| | Member who opened it | Other members | Staff |
-|---|---|---|---|
-| Open a ticket (panel button or `/ticket`) | ✅ | ✅ | ✅ |
-| See that ticket | ✅ | ❌ | ✅ |
-| Claim / Reopen | ❌ | ❌ | ✅ |
-| Close | ✅ (withdraw their own) | ❌ | ✅ |
-| List or view **any** ticket | ❌ — there is no command or button that shows a ticket list to a member | | ✅ |
-
-Members never see a ticket they did not open, and nothing lets them edit,
-search or browse tickets. `/ticket` only creates one; staff can read from
-`/manage tickets console` or `/manage tickets view`, and accept responsibility
-with `/manage tickets claim`. These commands are visible in the `/manage` tree
-but re-check staff permission whenever they run; non-staff callers only receive
-an ephemeral refusal. The dashboard can list and act on every ticket, and it
-requires the dashboard token.
 
 ### Applications
 
@@ -1335,13 +1057,10 @@ Sentinel/
 ├── command_tree.py         # the shared /manage group + admin check
 ├── settings.py             # per-guild config accessors (staff role, DM, ...)
 ├── store.py                # shared SQLite helpers (execute/fetch/insert)
-├── tickets.py              # ticket panels, private threads/channels, claim/close
 ├── applications.py         # application forms, modals, review and decisions
-├── rules.py                # rules publishing and the acceptance reaction role
-├── reaction_roles.py       # dashboard-published reaction-role menus
+├── legacy_cleanup.py       # one-time cleanup after the removed features
 ├── dashboard.py            # authenticated server-side dashboard/API
 ├── dashboard.html          # dashboard UI
-├── discord_markdown.py     # Markdown rendering/linting for the editors
 ├── duckdns.py              # optional DuckDNS dynamic-DNS updates
 ├── installer.py            # interactive first-run installer
 ├── paths.py                # where config/db/logs live at runtime
@@ -1375,12 +1094,9 @@ Sentinel/
 │   ├── test_dashboard.py        # dashboard login/session security + endpoints
 │   ├── test_duckdns.py          # DuckDNS update handling
 │   ├── test_glibc.py            # Linux build baseline checks
-│   ├── test_markdown.py         # Discord Markdown renderer/linter
+│   ├── test_legacy_cleanup.py   # cleanup of the removed rules/reaction/ticket data
 │   ├── test_paths.py            # packaged-install path resolution (read-only app dir)
-│   ├── test_reaction_roles.py   # reaction-role menus (storage, emoji, give/remove)
 │   ├── test_release_workflow.py # merge/tag release publishing (workflows + scripts)
-│   ├── test_rules.py            # rules acceptance/reaction-role behavior
-│   ├── test_tickets.py          # ticket panels, private threads, claim/close/reopen
 │   ├── test_version.py          # VERSION plumbing (build scripts, tag, --version)
 │   └── test_warnings.py         # warning escalation behavior
 └── data/                    # created at runtime, source checkouts only
@@ -1418,23 +1134,14 @@ python3 tests/test_dashboard.py      # run dashboard auth tests alone
 * **`Missing Permissions`** when running `/manage punish` — the bot's
   role isn't above the configured roles. Move it up in
   *Server Settings → Roles*.
-* **`/manage rules publish` can't post or react** — grant the bot **View Channel**,
-  **Send Messages**, **Embed Links**, and **Add Reactions** in the selected
-  channel. The acceptance role must be below the bot's role and must not have
-  moderation or server-management permissions.
-* **A rule set doesn't grant its role** — check `/manage rules list`: the set's
-  message id changes when you republish or move it, so an old post stops
-  reacting on purpose. Reactions are matched per message, and each set grants
-  only its own role. If `/manage rules disable` says nothing was configured, the set
-  was already removed from `config.json`.
-* **A reaction-role post doesn't grant roles** — the same limits as the
-  acceptance role apply: the role must sit below the bot's role, the bot needs
-  **Manage Roles**, and the role must not be managed by an integration. The
-  message must also still exist (a deleted message can't receive reactions
-  any more), so press **Edit** → **Save changes** on that post and the
-  dashboard reposts it under the same entry. `data/bot.log` names the failed
-  check (`Cannot manage reaction role …`, `Configured reaction role … is
-  missing`).
+* **Old rule-set posts, reaction-role menus or ticket panels are still in my
+  channels** — those features were removed, and the first start afterwards
+  deletes the posts they left behind. If one survives, `data/bot.log` says why
+  (`Could not delete the … in guild …`): usually the bot lacks **Manage
+  Messages** in that channel, or the bot is no longer in that server. Delete
+  those messages by hand — the config entries are pruned either way, so the bot
+  will not keep retrying. The private ticket threads and channels are never
+  deleted automatically; remove them yourself if you want them gone.
 * **Dashboard won't open** — it binds to `127.0.0.1:8765` by default, so open
   it on the bot host or use the documented SSH tunnel. Check `data/bot.log`
   for a port or config error; remote reverse-proxy hosts must be in

@@ -46,46 +46,6 @@ from aiohttp import web
 
 import applications
 import paths
-import tickets
-from discord_markdown import lint_markdown, render_markdown_html
-from reaction_roles import (
-    DEFAULT_POST_MESSAGE,
-    MAX_EMBED_MESSAGE_LENGTH,
-    MAX_PLAIN_MESSAGE_LENGTH,
-    MAX_REACTION_ENTRIES,
-    MAX_TITLE_LENGTH,
-    build_post_content,
-    emoji_key,
-    entry_action,
-    find_reaction_post,
-    get_guild_reaction_posts,
-    message_limit,
-    new_post_id,
-    parse_entries,
-    remove_reaction_post,
-    upsert_reaction_post,
-    validate_post_entries,
-)
-from rules import (
-    DEFAULT_RULESET_NAME,
-    MAX_RULESETS_PER_GUILD,
-    MAX_RULES_LENGTH,
-    MAX_RULESET_NAME_LENGTH,
-    PRIVILEGED_ROLE_PERMISSIONS,
-    RULES_ACCEPT_EMOJI,
-    RULES_POST_CONTENT,
-    RulesMixin,
-    fetch_configured_message,
-    find_ruleset,
-    get_guild_rulesets,
-    new_ruleset_id,
-    remove_ruleset,
-    rules_embed_title,
-    ruleset_id,
-    ruleset_name,
-    upsert_ruleset,
-    validate_post_channel,
-)
 
 
 logger = logging.getLogger("sentinel.dashboard")
@@ -97,6 +57,32 @@ MAX_REASON_LENGTH = 900
 #: Rows a list endpoint returns at once. The dashboard shows the newest slice;
 #: anything older is still in SQLite and one filter away.
 MAX_DASHBOARD_ROWS = 100
+
+#: Permissions the punishment roles must never grant. Sentinel swaps these
+#: roles onto real members on a timer, so a role carrying moderation or
+#: server-management power would hand that power to whoever is punished — and
+#: to whoever they are after the punishment ends. Ordinary access/verified/
+#: member roles are fine.
+#:
+#: This lived in the rules module, which the self-service reaction features
+#: shared it with; those are gone, and server settings are the only remaining
+#: consumer, so the policy lives here next to the check that applies it.
+PRIVILEGED_ROLE_PERMISSIONS = (
+    "administrator",
+    "manage_guild",
+    "manage_roles",
+    "manage_channels",
+    "manage_messages",
+    "manage_webhooks",
+    "manage_threads",
+    "view_audit_log",
+    "kick_members",
+    "ban_members",
+    "moderate_members",
+    "manage_nicknames",
+    "manage_emojis_and_stickers",
+    "manage_events",
+)
 
 
 def _is_loopback_host(host: str) -> bool:
@@ -158,7 +144,7 @@ class _DashboardActor:
 
     The id is a real Discord user (the server owner, by convention), so audit
     rows stay resolvable, while ``mention`` can carry a plain-English label for
-    the messages that render it — a ticket that says it was closed by
+    the messages that render it — a notice that says it was sent by
     "the dashboard" is more useful than one that names the server owner.
     """
 
@@ -511,69 +497,6 @@ class DashboardServer:
                     self.clear_warnings,
                 ),
                 web.get("/api/guilds/{guild_id}/history", self.history),
-                web.get("/api/guilds/{guild_id}/rules", self.rules_status),
-                web.put("/api/guilds/{guild_id}/rules", self.publish_rules),
-                # Registered before the {ruleset_id} route so "preview" is not
-                # swallowed as a rule set id.
-                web.post(
-                    "/api/guilds/{guild_id}/rules/preview", self.preview_rules
-                ),
-                web.post(
-                    "/api/guilds/{guild_id}/rules/{ruleset_id}", self.update_rules
-                ),
-                web.delete("/api/guilds/{guild_id}/rules", self.disable_rules),
-                web.delete(
-                    "/api/guilds/{guild_id}/rules/{ruleset_id}", self.disable_rules
-                ),
-                web.get(
-                    "/api/guilds/{guild_id}/reaction-roles",
-                    self.reaction_roles_status,
-                ),
-                # Registered before the {post_id} route so "preview" is not
-                # swallowed as a post id.
-                web.post(
-                    "/api/guilds/{guild_id}/reaction-roles/preview",
-                    self.preview_reaction_roles,
-                ),
-                web.put(
-                    "/api/guilds/{guild_id}/reaction-roles",
-                    self.publish_reaction_roles,
-                ),
-                web.post(
-                    "/api/guilds/{guild_id}/reaction-roles/{post_id}",
-                    self.update_reaction_roles,
-                ),
-                web.delete(
-                    "/api/guilds/{guild_id}/reaction-roles/{post_id}",
-                    self.delete_reaction_roles,
-                ),
-                web.get("/api/guilds/{guild_id}/tickets", self.tickets_status),
-                web.put(
-                    "/api/guilds/{guild_id}/tickets/settings",
-                    self.save_ticket_settings,
-                ),
-                web.post(
-                    "/api/guilds/{guild_id}/tickets/categories",
-                    self.save_ticket_category,
-                ),
-                web.delete(
-                    "/api/guilds/{guild_id}/tickets/categories/{category_id}",
-                    self.delete_ticket_category,
-                ),
-                web.post(
-                    "/api/guilds/{guild_id}/tickets/panel", self.publish_ticket_panel
-                ),
-                web.post(
-                    "/api/guilds/{guild_id}/tickets/{ticket_id}/close",
-                    self.close_ticket,
-                ),
-                web.post(
-                    "/api/guilds/{guild_id}/tickets/{ticket_id}/reopen",
-                    self.reopen_ticket,
-                ),
-                web.delete(
-                    "/api/guilds/{guild_id}/tickets/{ticket_id}", self.delete_ticket
-                ),
                 web.get(
                     "/api/guilds/{guild_id}/applications", self.applications_status
                 ),
@@ -816,7 +739,6 @@ class DashboardServer:
     async def guild_detail(self, request: web.Request) -> web.Response:
         guild = self._guild_from_request(request)
         config = self._get_guild_config(self.bot.config, guild.id) or {}
-        rulesets = get_guild_rulesets(self.bot.config, guild.id)
         roles = [
             {
                 "id": _snowflake(role.id),
@@ -836,9 +758,8 @@ class DashboardServer:
             }
             for channel in guild.text_channels
         ]
-        # Discord's *category* channels, for features that create their own
-        # channels (channel-mode tickets). Kept separate from `channels`: a
-        # category is not a destination anything can be posted to.
+        # Discord's *category* channels. Kept separate from `channels`: a
+        # category is a container, not a destination anything can be posted to.
         categories = [
             {"id": _snowflake(channel.id), "name": channel.name}
             for channel in guild.categories
@@ -868,12 +789,6 @@ class DashboardServer:
                         self._get_staff_channel_id(self.bot.config, guild.id)
                     ),
                     "dmUser": self._should_dm_user(self.bot.config, guild.id),
-                },
-                "rules": {
-                    "enabled": bool(rulesets),
-                    "rulesets": [
-                        _ruleset_payload(settings, guild) for settings in rulesets
-                    ],
                 },
                 "roles": roles,
                 "channels": channels,
@@ -1297,822 +1212,6 @@ class DashboardServer:
             {"cleared": removed, "userId": _snowflake(member.id)}
         )
 
-    async def rules_status(self, request: web.Request) -> web.Response:
-        """Every published rule set for the selected server."""
-        guild = self._guild_from_request(request)
-        rulesets = [
-            _ruleset_payload(settings, guild)
-            for settings in get_guild_rulesets(self.bot.config, guild.id)
-        ]
-        return web.json_response(
-            {
-                "rulesets": rulesets,
-                "enabled": bool(rulesets),
-                "maxRulesets": MAX_RULESETS_PER_GUILD,
-                "defaultName": DEFAULT_RULESET_NAME,
-                "maxNameLength": MAX_RULESET_NAME_LENGTH,
-                "prompt": RULES_POST_CONTENT,
-                "acceptEmoji": RULES_ACCEPT_EMOJI,
-            }
-        )
-
-    async def preview_rules(self, request: web.Request) -> web.Response:
-        """Render rules Markdown the way Discord will show it.
-
-        A preview is side-effect free (nothing is published or saved), so it is
-        safe to call while typing. It shares the publish path's length limit,
-        and the returned notes describe syntax Discord renders literally rather
-        than rejecting it.
-        """
-        self._guild_from_request(request)  # 404 unless the bot is in this server
-        data = await self._json_body(request)
-        text = str(data.get("text", ""))
-        if len(text) > MAX_RULES_LENGTH:
-            raise web.HTTPBadRequest(
-                text=f"Rules are limited to {MAX_RULES_LENGTH} characters."
-            )
-        return web.json_response(
-            {
-                "html": render_markdown_html(text),
-                "warnings": lint_markdown(text),
-                "length": len(text),
-                "limit": MAX_RULES_LENGTH,
-            }
-        )
-
-    async def publish_rules(self, request: web.Request) -> web.Response:
-        """Create a new rule set: post its embed and attach the ✅ reaction."""
-        guild = self._guild_from_request(request)
-        rules_cog = self._rules_cog()
-        data = await self._json_body(request)
-
-        rulesets = get_guild_rulesets(self.bot.config, guild.id)
-        if len(rulesets) >= MAX_RULESETS_PER_GUILD:
-            raise web.HTTPBadRequest(
-                text=(
-                    f"This server already has {MAX_RULESETS_PER_GUILD} rule sets. "
-                    "Remove one before adding another."
-                )
-            )
-
-        name, error = self._ruleset_name(data, rulesets)
-        if error is not None:
-            raise web.HTTPBadRequest(text=error)
-        channel, role, error = self._ruleset_target(guild, data, rules_cog)
-        if error is not None:
-            raise web.HTTPBadRequest(text=error)
-        text = self._ruleset_text(data)
-
-        message = await self._send_rules_post(guild, channel, name, text)
-        settings = {
-            "ruleset_id": new_ruleset_id(),
-            "name": name,
-            "channel_id": channel.id,
-            "message_id": message.id,
-            "role_id": role.id,
-            "rules_text": text,
-        }
-        updated = upsert_ruleset(self.bot.config, guild.id, settings)
-        old_config = self.bot.config
-        self.bot.config = updated
-        try:
-            self._save_config(updated)
-        except Exception as exc:
-            self.bot.config = old_config
-            await self._delete_message(message)
-            logger.exception("Could not save rules settings from dashboard")
-            raise web.HTTPInternalServerError(text="Rules post could not be saved to config.") from exc
-
-        logger.info("Dashboard published rule set %r for guild %s", name, guild.id)
-        return web.json_response(
-            {
-                "published": True,
-                "rulesetId": settings["ruleset_id"],
-                "messageId": _snowflake(message.id),
-            },
-            status=201,
-        )
-
-    async def update_rules(self, request: web.Request) -> web.Response:
-        """Edit a rule set in place: name, channel, role and text.
-
-        The message is edited when it still exists and stays in its channel;
-        otherwise (message deleted, channel changed, or text too long for an
-        embed) a fresh post replaces it, exactly like the reaction-role menus.
-        """
-        guild = self._guild_from_request(request)
-        rules_cog = self._rules_cog()
-        ruleset_id_value = request.match_info.get("ruleset_id")
-        existing = find_ruleset(self.bot.config, guild.id, ruleset_id_value)
-        if existing is None:
-            raise web.HTTPNotFound(text="That rule set is no longer configured.")
-        data = await self._json_body(request)
-
-        other_sets = [
-            settings
-            for settings in get_guild_rulesets(self.bot.config, guild.id)
-            if ruleset_id(settings) != str(ruleset_id_value)
-        ]
-        name, error = self._ruleset_name(data, other_sets)
-        if error is not None:
-            raise web.HTTPBadRequest(text=error)
-        channel, role, error = self._ruleset_target(guild, data, rules_cog)
-        if error is not None:
-            raise web.HTTPBadRequest(text=error)
-        text = self._ruleset_text(data)
-
-        settings = {
-            "ruleset_id": str(ruleset_id_value),
-            "name": name,
-            "channel_id": channel.id,
-            "message_id": existing.get("message_id"),
-            "role_id": role.id,
-            "rules_text": text,
-        }
-        old_message = await fetch_configured_message(guild, existing)
-        channel_changed = str(existing.get("channel_id")) != str(channel.id)
-        content, embed = self._rules_post_payload(guild, name, text)
-        if old_message is None or channel_changed or len(content or "") > 2000:
-            message = await self._send_rules_post(guild, channel, name, text)
-            settings["message_id"] = message.id
-            if old_message is not None and old_message.id != message.id:
-                await self._delete_message(old_message)
-        else:
-            try:
-                message = await old_message.edit(
-                    content=content,
-                    embed=embed,
-                    allowed_mentions=discord.AllowedMentions.none(),
-                )
-            except discord.Forbidden:
-                raise web.HTTPForbidden(
-                    text="The bot cannot edit that rules post any more. Check its channel permissions."
-                ) from None
-            except discord.HTTPException as exc:
-                logger.warning("Could not update rules message %s: %s", old_message.id, exc)
-                raise web.HTTPBadGateway(
-                    text="Discord could not update that rules post."
-                ) from exc
-
-        old_config = self.bot.config
-        self.bot.config = upsert_ruleset(old_config, guild.id, settings)
-        try:
-            self._save_config(self.bot.config)
-        except Exception as exc:
-            self.bot.config = old_config
-            raise web.HTTPInternalServerError(
-                text="Could not save the rule set to config."
-            ) from exc
-
-        logger.info("Dashboard updated rule set %s for guild %s", ruleset_id_value, guild.id)
-        return web.json_response(
-            {
-                "updated": True,
-                "rulesetId": str(ruleset_id_value),
-                "messageId": _snowflake(message.id),
-            }
-        )
-
-    async def disable_rules(self, request: web.Request) -> web.Response:
-        """Remove one rule set (by id, or by ``ruleset_id=`` query parameter)."""
-        guild = self._guild_from_request(request)
-        rules_cog = self._rules_cog()
-        rulesets = get_guild_rulesets(self.bot.config, guild.id)
-        if not rulesets:
-            return web.json_response({"disabled": True, "alreadyDisabled": True})
-
-        wanted = request.match_info.get("ruleset_id") or request.query.get("ruleset_id")
-        if wanted:
-            settings = find_ruleset(self.bot.config, guild.id, wanted)
-            if settings is None:
-                raise web.HTTPNotFound(text="That rule set is no longer configured.")
-        elif len(rulesets) == 1:
-            settings = rulesets[0]
-        else:
-            raise web.HTTPBadRequest(
-                text=(
-                    "This server has several rule sets — choose which one to "
-                    "remove from the list."
-                )
-            )
-
-        updated = remove_ruleset(self.bot.config, guild.id, ruleset_id(settings))
-        try:
-            self._save_config(updated)
-        except Exception as exc:
-            logger.exception("Could not disable rules from dashboard")
-            raise web.HTTPInternalServerError(text="Could not save the rules settings.") from exc
-        self.bot.config = updated
-        await rules_cog._mark_post_disabled(guild, settings)
-        logger.info(
-            "Dashboard removed rule set %s for guild %s", ruleset_id(settings), guild.id
-        )
-        return web.json_response({"disabled": True, "rulesetId": ruleset_id(settings)})
-
-    def _rules_cog(self):
-        """The cog the rules commands and their helpers live in.
-
-        Those commands hang off the shared ``/manage`` group, so they are mixed
-        into the bot's main cog rather than registered as a ``RulesCog`` of
-        their own. Find it by what it is instead of by name.
-        """
-        for cog in self.bot.cogs.values():
-            if isinstance(cog, RulesMixin):
-                return cog
-        raise web.HTTPServiceUnavailable(text="Rules module is not loaded.")
-
-    @staticmethod
-    def _ruleset_name(data: dict, others: list[dict]) -> tuple[Optional[str], Optional[str]]:
-        """Validate a rule set name, which doubles as its dashboard handle.
-
-        The name is stored exactly as typed. It is never normalised towards
-        :const:`DEFAULT_RULESET_NAME`, so a set the administrator titles
-        "Server rules" keeps that name instead of being auto-corrected to the
-        default; the default only applies when the field is left empty.
-        """
-        name = str(data.get("name") or "").strip() or DEFAULT_RULESET_NAME
-        if len(name) > MAX_RULESET_NAME_LENGTH:
-            return None, (
-                f"Names are limited to {MAX_RULESET_NAME_LENGTH} characters; "
-                f"that one is {len(name)}."
-            )
-        taken = {ruleset_name(settings).casefold() for settings in others}
-        if name.casefold() in taken:
-            return None, f"Another rule set is already named “{name}”."
-        return name, None
-
-    def _ruleset_target(
-        self, guild: discord.Guild, data: dict, rules_cog
-    ) -> tuple[Optional[object], Optional[object], Optional[str]]:
-        """Resolve and validate the post channel and acceptance role."""
-        channel = guild.get_channel(
-            self._required_int(data.get("channelId"), "channel ID")
-        )
-        role = guild.get_role(self._required_int(data.get("roleId"), "role ID"))
-        if not isinstance(channel, discord.TextChannel) or role is None:
-            return None, None, "Choose a valid text channel and role from this server."
-        problem = rules_cog._validate_role(guild, channel, role)
-        return channel, role, problem or None
-
-    @staticmethod
-    def _ruleset_text(data: dict) -> str:
-        text = str(data.get("text", "")).strip()
-        if not text:
-            raise web.HTTPBadRequest(text="Rules text cannot be empty.")
-        if len(text) > MAX_RULES_LENGTH:
-            raise web.HTTPBadRequest(
-                text=f"Rules are limited to {MAX_RULES_LENGTH} characters."
-            )
-        return text
-
-    @staticmethod
-    def _rules_post_payload(
-        guild: discord.Guild, name: str, text: str
-    ) -> tuple[str, discord.Embed]:
-        """The prompt + embed a rule set posts, shared by publish and edit."""
-        embed = discord.Embed(
-            title=rules_embed_title(guild.name, name),
-            description=text,
-            color=discord.Color.blurple(),
-        )
-        embed.set_footer(text=f"React with {RULES_ACCEPT_EMOJI} to accept the rules")
-        return RULES_POST_CONTENT, embed
-
-    async def _send_rules_post(
-        self, guild: discord.Guild, channel, name: str, text: str
-    ) -> discord.Message:
-        content, embed = self._rules_post_payload(guild, name, text)
-        try:
-            message = await channel.send(
-                content=content,
-                embed=embed,
-                allowed_mentions=discord.AllowedMentions.none(),
-            )
-        except discord.Forbidden:
-            raise web.HTTPForbidden(text="The bot cannot send embeds in that channel.") from None
-        except discord.HTTPException as exc:
-            logger.warning("Dashboard rules publish failed for guild %s: %s", guild.id, exc)
-            raise web.HTTPBadGateway(text="Discord could not publish the rules message.") from exc
-
-        try:
-            await message.add_reaction(RULES_ACCEPT_EMOJI)
-        except discord.HTTPException as exc:
-            await self._delete_message(message)
-            logger.warning(
-                "Dashboard could not add rules reaction for guild %s: %s", guild.id, exc
-            )
-            raise web.HTTPBadGateway(
-                text="The rules post was sent, but the bot could not add its reaction."
-            ) from exc
-        return message
-
-    # ---- Reaction-role menus --------------------------------------------- #
-    async def reaction_roles_status(self, request: web.Request) -> web.Response:
-        """Every reaction-role post configured for the selected server."""
-        guild = self._guild_from_request(request)
-        return web.json_response(
-            {
-                "posts": [
-                    _reaction_post_payload(post)
-                    for post in get_guild_reaction_posts(self.bot.config, guild.id)
-                ],
-                "maxEntries": MAX_REACTION_ENTRIES,
-                "maxTitleLength": MAX_TITLE_LENGTH,
-                "defaultMessage": DEFAULT_POST_MESSAGE,
-                "limits": {
-                    "embed": MAX_EMBED_MESSAGE_LENGTH,
-                    "plain": MAX_PLAIN_MESSAGE_LENGTH,
-                },
-            }
-        )
-
-    async def preview_reaction_roles(self, request: web.Request) -> web.Response:
-        """Render a reaction-role message the way Discord will show it.
-
-        Side-effect free, so it is safe to call while typing; the message is
-        read through :meth:`_reaction_message` so the preview obeys the same
-        length limit and the same default text as the publish path.
-        """
-        self._guild_from_request(request)  # 404 unless the bot is in this server
-        data = await self._json_body(request)
-        message, limit, error = self._reaction_message(data)
-        if error is not None:
-            raise web.HTTPBadRequest(text=error)
-        return web.json_response(
-            {
-                "html": render_markdown_html(message),
-                "warnings": lint_markdown(message),
-                "length": len(message),
-                "limit": limit,
-            }
-        )
-
-    async def publish_reaction_roles(self, request: web.Request) -> web.Response:
-        """Create a new reaction-role post and attach every configured emoji."""
-        guild = self._guild_from_request(request)
-        data = await self._json_body(request)
-        post, error = self._reaction_post_settings(guild, data, post_id=new_post_id())
-        if error is not None:
-            raise web.HTTPBadRequest(text=error)
-
-        channel = guild.get_channel(int(post["channel_id"]))
-        message = await self._send_reaction_post(channel, post)
-        post["message_id"] = message.id
-        updated = upsert_reaction_post(self.bot.config, guild.id, post)
-        try:
-            self._persist_config(updated)
-        except web.HTTPException:
-            # Nothing was saved, so the Discord post would be an orphan.
-            await self._delete_message(message)
-            raise
-        logger.info(
-            "Dashboard published reaction role post %s for guild %s",
-            post["post_id"],
-            guild.id,
-        )
-        return web.json_response(
-            {"postId": post["post_id"], "messageId": _snowflake(message.id)},
-            status=201,
-        )
-
-    async def update_reaction_roles(self, request: web.Request) -> web.Response:
-        """Edit an existing reaction-role post: text, style, emoji → role pairs."""
-        guild = self._guild_from_request(request)
-        post_id = request.match_info.get("post_id")
-        existing = find_reaction_post(self.bot.config, guild.id, post_id)
-        if existing is None:
-            raise web.HTTPNotFound(text="That reaction role post is no longer configured.")
-
-        data = await self._json_body(request)
-        post, error = self._reaction_post_settings(
-            guild, data, post_id=str(existing.get("post_id"))
-        )
-        if error is not None:
-            raise web.HTTPBadRequest(text=error)
-
-        channel = guild.get_channel(int(post["channel_id"]))
-        old_message = await self._fetch_post_message(guild, existing)
-        channel_changed = str(existing.get("channel_id")) != str(post["channel_id"])
-        if old_message is None or channel_changed:
-            # The post was moved, or its message is gone: send a fresh one
-            # under the same post id, then retire the old message.
-            message = await self._send_reaction_post(channel, post)
-            if old_message is not None and old_message.id != message.id:
-                await self._delete_message(old_message)
-        else:
-            message = await self._edit_reaction_post(old_message, post)
-
-        post["message_id"] = message.id
-        updated = upsert_reaction_post(self.bot.config, guild.id, post)
-        self._persist_config(updated)
-        logger.info(
-            "Dashboard updated reaction role post %s for guild %s",
-            post["post_id"],
-            guild.id,
-        )
-        return web.json_response(
-            {
-                "postId": post["post_id"],
-                "messageId": _snowflake(message.id),
-                "updated": True,
-            }
-        )
-
-    async def delete_reaction_roles(self, request: web.Request) -> web.Response:
-        """Forget a reaction-role post and (by default) delete its message."""
-        guild = self._guild_from_request(request)
-        post_id = request.match_info.get("post_id")
-        post = find_reaction_post(self.bot.config, guild.id, post_id)
-        if post is None:
-            return web.json_response({"deleted": True, "alreadyRemoved": True})
-
-        delete_message = str(request.query.get("deleteMessage", "true")).lower() not in {
-            "0",
-            "false",
-            "no",
-        }
-        updated = remove_reaction_post(self.bot.config, guild.id, post_id)
-        self._persist_config(updated)
-
-        message_deleted = False
-        if delete_message:
-            message = await self._fetch_post_message(guild, post)
-            if message is not None:
-                try:
-                    await message.delete()
-                    message_deleted = True
-                except discord.HTTPException as exc:
-                    logger.info(
-                        "Could not delete reaction role message %s: %s",
-                        post.get("message_id"),
-                        exc,
-                    )
-        logger.info(
-            "Dashboard removed reaction role post %s for guild %s", post_id, guild.id
-        )
-        return web.json_response({"deleted": True, "messageDeleted": message_deleted})
-
-    @staticmethod
-    def _reaction_message(data: dict) -> tuple[str, int, Optional[str]]:
-        """The message text a post will carry, its limit, and any problem."""
-        use_embed = bool(data.get("useEmbed", True))
-        message = str(data.get("message") or "").strip() or DEFAULT_POST_MESSAGE
-        limit = message_limit(use_embed)
-        if len(message) > limit:
-            style = "Embed descriptions" if use_embed else "Plain messages"
-            return message, limit, f"{style} are limited to {limit} characters."
-        return message, limit, None
-
-    def _reaction_post_settings(
-        self,
-        guild: discord.Guild,
-        data: dict,
-        *,
-        post_id: str,
-    ) -> tuple[Optional[dict], Optional[str]]:
-        """Validate a dashboard request into a storable post, or explain why not."""
-        channel = guild.get_channel(
-            self._required_int(data.get("channelId"), "channel ID")
-        )
-        if not isinstance(channel, discord.TextChannel):
-            return None, "Choose a valid text channel from this server."
-        problem = validate_post_channel(guild, channel)
-        if problem is not None:
-            return None, problem
-
-        try:
-            entries = parse_entries(data.get("entries"))
-        except ValueError as exc:
-            return None, str(exc)
-        problem = validate_post_entries(guild, entries)
-        if problem is not None:
-            return None, problem
-
-        message, _limit, error = self._reaction_message(data)
-        if error is not None:
-            return None, error
-
-        title = str(data.get("title") or "").strip()
-        if len(title) > MAX_TITLE_LENGTH:
-            return None, f"Embed titles are limited to {MAX_TITLE_LENGTH} characters."
-
-        return (
-            {
-                "post_id": str(post_id),
-                "channel_id": channel.id,
-                "message": message,
-                "title": title,
-                "use_embed": bool(data.get("useEmbed", True)),
-                "remove_on_unreact": bool(data.get("removeOnUnreact", True)),
-                "entries": entries,
-            },
-            None,
-        )
-
-    async def _send_reaction_post(
-        self, channel: discord.TextChannel, post: dict
-    ) -> discord.Message:
-        content, embed = build_post_content(post)
-        try:
-            message = await channel.send(
-                content=content,
-                embed=embed,
-                allowed_mentions=discord.AllowedMentions.none(),
-            )
-        except discord.Forbidden:
-            raise web.HTTPForbidden(
-                text="The bot cannot post in that channel. Check its channel permissions."
-            ) from None
-        except discord.HTTPException as exc:
-            logger.warning("Could not publish reaction role post: %s", exc)
-            raise web.HTTPBadGateway(
-                text="Discord could not publish the reaction role post."
-            ) from exc
-
-        try:
-            for entry in post.get("entries") or []:
-                await message.add_reaction(entry["emoji"])
-        except discord.HTTPException as exc:
-            await self._delete_message(message)
-            logger.warning("Discord rejected a reaction role emoji: %s", exc)
-            raise web.HTTPBadGateway(
-                text=(
-                    "Discord rejected one of the emoji reactions. Check that the "
-                    "emoji still exists and that the bot can add reactions there."
-                )
-            ) from exc
-        return message
-
-    async def _edit_reaction_post(
-        self, message: discord.Message, post: dict
-    ) -> discord.Message:
-        content, embed = build_post_content(post)
-        try:
-            edited = await message.edit(
-                content=content,
-                embed=embed,
-                allowed_mentions=discord.AllowedMentions.none(),
-            )
-        except discord.Forbidden:
-            raise web.HTTPForbidden(
-                text="The bot cannot edit that post any more. Check its channel permissions."
-            ) from None
-        except discord.HTTPException as exc:
-            logger.warning("Could not update reaction role post %s: %s", message.id, exc)
-            raise web.HTTPBadGateway(
-                text="Discord could not update that reaction role post."
-            ) from exc
-
-        await self._sync_reactions(message, post)
-        return edited
-
-    async def _sync_reactions(self, message: discord.Message, post: dict) -> None:
-        """Add reactions for new pairs and drop the bot's stale ones."""
-        wanted = {
-            emoji_key(str(entry["emoji"])) for entry in post.get("entries") or []
-        }
-        current = list(message.reactions)
-        bot_user = self.bot.user
-        try:
-            for entry in post.get("entries") or []:
-                if emoji_key(str(entry["emoji"])) not in {
-                    emoji_key(str(reaction.emoji)) for reaction in current
-                }:
-                    await message.add_reaction(entry["emoji"])
-            for reaction in current:
-                if emoji_key(str(reaction.emoji)) in wanted:
-                    continue
-                if bot_user is None or not getattr(reaction, "me", True):
-                    continue
-                await message.remove_reaction(reaction.emoji, bot_user)
-        except discord.HTTPException as exc:
-            logger.warning(
-                "Could not sync reactions on reaction role post %s: %s", message.id, exc
-            )
-            raise web.HTTPBadGateway(
-                text=(
-                    "The post text was saved, but Discord rejected one of its "
-                    "reactions. Check the emoji and try again."
-                )
-            ) from exc
-
-    async def _fetch_post_message(
-        self, guild: discord.Guild, post: dict
-    ) -> Optional[discord.Message]:
-        return await fetch_configured_message(guild, post)
-
-    # ---- Tickets ------------------------------------------------------- #
-    async def tickets_status(self, request: web.Request) -> web.Response:
-        """Settings, panel location and the ticket list for one server.
-
-        Reading tickets is a staff action even here: the whole dashboard is
-        behind the high-privilege dashboard token, so normal members have no
-        route to this data at all.
-        """
-        guild = self._guild_from_request(request)
-        settings = tickets.get_guild_tickets(self.bot.config, guild.id)
-        wanted = (request.query.get("status") or "all").strip().lower()
-        status = None if wanted not in set(tickets.STATUSES) | {"open"} else wanted
-        records = tickets.list_tickets(
-            guild.id,
-            status=status,
-            user_id=self._optional_int(request.query.get("userId"), "user ID"),
-            limit=MAX_DASHBOARD_ROWS,
-        )
-        return web.json_response(
-            {
-                "settings": _ticket_settings_payload(settings, guild),
-                "tickets": [_ticket_payload(record, guild) for record in records],
-                "counts": {
-                    "open": tickets.count_open_tickets(guild.id),
-                    "shown": len(records),
-                },
-            }
-        )
-
-    async def save_ticket_settings(self, request: web.Request) -> web.Response:
-        guild = self._guild_from_request(request)
-        data = await self._json_body(request)
-        settings = tickets.get_guild_tickets(self.bot.config, guild.id)
-
-        if "mode" in data:
-            mode = tickets.normalize_mode(data.get("mode"))
-            if mode is None:
-                raise web.HTTPBadRequest(
-                    text="Ticket mode must be 'thread' or 'channel'."
-                )
-            settings["mode"] = mode
-
-        if "logChannelId" in data:
-            log_channel_id = self._optional_int(data.get("logChannelId"), "log channel")
-            if log_channel_id is not None:
-                self._ticket_text_channel(guild, log_channel_id, "log channel")
-            settings["log_channel_id"] = log_channel_id
-
-        if "categoryId" in data:
-            category_id = self._optional_int(data.get("categoryId"), "category")
-            if category_id is not None:
-                channel = guild.get_channel(category_id)
-                if not isinstance(channel, discord.CategoryChannel):
-                    raise web.HTTPBadRequest(
-                        text="Choose a Discord category for channel-mode tickets."
-                    )
-            settings["category_id"] = category_id
-
-        tickets.write_guild_tickets(self.bot.config, guild.id, settings)
-        logger.info("Dashboard saved ticket settings for guild %s", guild.id)
-        return web.json_response(
-            {"saved": True, "settings": _ticket_settings_payload(settings, guild)}
-        )
-
-    async def save_ticket_category(self, request: web.Request) -> web.Response:
-        """Create or update one ticket panel category."""
-        guild = self._guild_from_request(request)
-        data = await self._json_body(request)
-        label = str(data.get("label") or "").strip()
-        if not label:
-            raise web.HTTPBadRequest(text="Give the category a name.")
-        if len(label) > tickets.MAX_LABEL_LENGTH:
-            raise web.HTTPBadRequest(
-                text=f"Category names are limited to {tickets.MAX_LABEL_LENGTH} characters."
-            )
-        mode = None
-        if data.get("mode"):
-            mode = tickets.normalize_mode(data.get("mode"))
-            if mode is None:
-                raise web.HTTPBadRequest(
-                    text="A category mode must be 'thread', 'channel', or empty to inherit."
-                )
-
-        existing_id = str(data.get("categoryId") or "").strip()
-        settings = tickets.get_guild_tickets(self.bot.config, guild.id)
-        existing = tickets.find_panel_category(settings, existing_id) if existing_id else None
-        if existing_id and existing is None:
-            raise web.HTTPNotFound(text="That category no longer exists.")
-
-        staff_role_id = self._optional_int(data.get("staffRoleId"), "staff role")
-        if staff_role_id is not None and guild.get_role(staff_role_id) is None:
-            raise web.HTTPBadRequest(text="Choose a role from this server.")
-
-        category = {
-            "category_id": existing["category_id"] if existing else tickets.new_category_id(),
-            "label": label,
-            "emoji": str(data.get("emoji") or "").strip() or None,
-            "staff_role_id": staff_role_id
-            if "staffRoleId" in data
-            else (existing or {}).get("staff_role_id"),
-            "description": str(data.get("description") or "").strip() or None,
-            "mode": mode if "mode" in data else (existing or {}).get("mode"),
-            "ask_subject": bool(data.get("askSubject", True)),
-            "ping_staff": bool(data.get("pingStaff", True)),
-        }
-        try:
-            stored = tickets.upsert_category(self.bot.config, guild.id, category)
-        except tickets.TicketError as exc:
-            raise web.HTTPBadRequest(text=str(exc))
-        logger.info("Dashboard saved ticket category %s for guild %s", label, guild.id)
-        return web.json_response(
-            {"saved": True, "category": _ticket_category_payload(stored, guild)},
-            status=201,
-        )
-
-    async def delete_ticket_category(self, request: web.Request) -> web.Response:
-        guild = self._guild_from_request(request)
-        category_id = request.match_info.get("category_id", "")
-        try:
-            removed = tickets.remove_category(self.bot.config, guild.id, category_id)
-        except tickets.TicketError as exc:
-            raise web.HTTPNotFound(text=str(exc))
-        logger.info("Dashboard removed ticket category %s for guild %s", category_id, guild.id)
-        return web.json_response(
-            {"removed": True, "category": _ticket_category_payload(removed, guild)}
-        )
-
-    async def publish_ticket_panel(self, request: web.Request) -> web.Response:
-        guild = self._guild_from_request(request)
-        data = await self._json_body(request)
-        channel = self._ticket_text_channel(
-            guild,
-            self._required_int(data.get("channelId"), "channel"),
-            "panel channel",
-        )
-        try:
-            panel = await tickets.publish_panel(
-                self.bot,
-                guild,
-                channel,
-                title=data.get("title"),
-                description=data.get("description"),
-            )
-        except tickets.TicketError as exc:
-            raise web.HTTPBadRequest(text=str(exc))
-        except discord.Forbidden as exc:
-            raise web.HTTPForbidden(
-                text="The bot needs View Channel, Send Messages and Embed Links there."
-            ) from exc
-        logger.info("Dashboard published the ticket panel for guild %s", guild.id)
-        return web.json_response({"published": True, "panel": panel}, status=201)
-
-    async def close_ticket(self, request: web.Request) -> web.Response:
-        guild = self._guild_from_request(request)
-        record = self._ticket_from_request(request, guild)
-        data = await self._json_body(request)
-        reason = str(data.get("reason") or "").strip()
-        if len(reason) > tickets.MAX_CLOSE_REASON_LENGTH:
-            raise web.HTTPBadRequest(
-                text=f"Keep the reason to {tickets.MAX_CLOSE_REASON_LENGTH} characters."
-            )
-        # Same audit convention as the punishment endpoints: a local dashboard
-        # credential is not a Discord identity, so the action is attributed to
-        # the server owner and marked as dashboard-originated.
-        actor = _DashboardActor(guild.owner_id)
-        try:
-            closed = await tickets.close_ticket(
-                self.bot,
-                guild,
-                record,
-                actor,
-                f"[Dashboard] {reason}" if reason else "[Dashboard] Closed from the dashboard",
-            )
-        except tickets.TicketError as exc:
-            raise web.HTTPBadRequest(text=str(exc))
-        logger.warning(
-            "Dashboard closed ticket guild=%s ticket=%s peer=%s",
-            guild.id,
-            record["id"],
-            request.remote or "unknown",
-        )
-        return web.json_response({"closed": True, "ticket": _ticket_payload(closed, guild)})
-
-    async def reopen_ticket(self, request: web.Request) -> web.Response:
-        guild = self._guild_from_request(request)
-        record = self._ticket_from_request(request, guild)
-        try:
-            reopened = await tickets.reopen_ticket(self.bot, guild, record)
-        except tickets.TicketError as exc:
-            raise web.HTTPBadRequest(text=str(exc))
-        logger.warning(
-            "Dashboard reopened ticket guild=%s ticket=%s peer=%s",
-            guild.id,
-            record["id"],
-            request.remote or "unknown",
-        )
-        return web.json_response(
-            {"reopened": True, "ticket": _ticket_payload(reopened, guild)}
-        )
-
-    async def delete_ticket(self, request: web.Request) -> web.Response:
-        guild = self._guild_from_request(request)
-        record = self._ticket_from_request(request, guild)
-        await tickets.delete_ticket(self.bot, guild, record)
-        logger.warning(
-            "Dashboard deleted ticket guild=%s ticket=%s peer=%s",
-            guild.id,
-            record["id"],
-            request.remote or "unknown",
-        )
-        return web.json_response({"deleted": True, "ticketId": str(record["id"])})
-
     # ---- Applications -------------------------------------------------- #
     async def applications_status(self, request: web.Request) -> web.Response:
         guild = self._guild_from_request(request)
@@ -2155,7 +1254,7 @@ class DashboardServer:
                 text=f"Form names are limited to {applications.MAX_FORM_NAME_LENGTH} characters."
             )
 
-        review_channel = self._ticket_text_channel(
+        review_channel = self._postable_text_channel(
             guild,
             self._required_int(data.get("reviewChannelId"), "review channel"),
             "review channel",
@@ -2215,7 +1314,7 @@ class DashboardServer:
         )
         if form is None:
             raise web.HTTPNotFound(text="That application form no longer exists.")
-        channel = self._ticket_text_channel(
+        channel = self._postable_text_channel(
             guild,
             self._required_int(data.get("channelId"), "channel"),
             "panel channel",
@@ -2286,13 +1385,7 @@ class DashboardServer:
             raise web.HTTPBadGateway(text="Discord could not refresh application commands.")
         return web.json_response({"synced": bool(synced)})
 
-    async def _delete_message(self, message: discord.Message) -> None:
-        try:
-            await message.delete()
-        except discord.HTTPException as exc:
-            logger.info("Could not clean up dashboard rules message %s: %s", message.id, exc)
-
-    def _ticket_text_channel(
+    def _postable_text_channel(
         self, guild: discord.Guild, channel_id: int, label: str
     ) -> discord.TextChannel:
         """Resolve a text channel and check the bot can post in it.
@@ -2300,6 +1393,10 @@ class DashboardServer:
         Panel publishing and review posts are the parts of these features that
         fail *visibly* (a member presses nothing) when the bot lacks a
         permission, so the check happens here rather than after a failed post.
+
+        Named for what it does rather than for one caller: it was the ticket
+        system's helper first, and application panels and review posts use the
+        same check now that tickets are gone.
         """
         channel = guild.get_channel(int(channel_id))
         if not isinstance(channel, discord.TextChannel):
@@ -2369,15 +1466,6 @@ class DashboardServer:
                 }
             )
         return questions
-
-    def _ticket_from_request(
-        self, request: web.Request, guild: discord.Guild
-    ) -> dict:
-        """The ticket named in the URL path, or 404."""
-        record = tickets.get_ticket(request.match_info.get("ticket_id"))
-        if record is None or int(record["guild_id"]) != guild.id:
-            raise web.HTTPNotFound(text="That ticket no longer exists.")
-        return record
 
     def _application_from_request(
         self, request: web.Request, guild: discord.Guild
@@ -2494,66 +1582,6 @@ _ID_FIELD_SUFFIXES = ("_id", "Id")
 _ID_FIELD_EXCEPTIONS = {"id"}  # database row keys
 
 
-def _ticket_settings_payload(settings: dict, guild: discord.Guild) -> dict:
-    """Ticket settings as the dashboard needs them (ids stringified)."""
-    panel = settings.get("panel") or {}
-    return {
-        "mode": settings.get("mode"),
-        "logChannelId": _snowflake(settings.get("log_channel_id")),
-        "categoryId": _snowflake(settings.get("category_id")),
-        "number": settings.get("number") or 0,
-        "panel": {
-            "channelId": _snowflake(panel.get("channel_id")),
-            "messageId": _snowflake(panel.get("message_id")),
-            "title": panel.get("title"),
-            "description": panel.get("description"),
-        },
-        "categories": [
-            _ticket_category_payload(category, guild)
-            for category in settings.get("categories", [])
-        ],
-    }
-
-
-def _ticket_category_payload(category: dict, guild: discord.Guild) -> dict:
-    role_id = category.get("staff_role_id")
-    role = guild.get_role(int(role_id)) if role_id else None
-    return {
-        "categoryId": category.get("category_id"),
-        "label": category.get("label"),
-        "emoji": category.get("emoji"),
-        "description": category.get("description"),
-        "mode": category.get("mode"),
-        "staffRoleId": _snowflake(role_id),
-        "staffRoleName": role.name if role else None,
-        "askSubject": bool(category.get("ask_subject", True)),
-        "pingStaff": bool(category.get("ping_staff", True)),
-    }
-
-
-def _ticket_payload(ticket: dict, guild: discord.Guild) -> dict:
-    """One ticket row, with the ids a browser must not round as strings."""
-    return {
-        "id": _snowflake(ticket.get("id")),
-        "number": ticket.get("number"),
-        "userId": _snowflake(ticket.get("user_id")),
-        "categoryId": ticket.get("category_id"),
-        "categoryLabel": ticket.get("category_label"),
-        "mode": ticket.get("mode"),
-        "status": ticket.get("status"),
-        "claimedBy": _snowflake(ticket.get("claimed_by")),
-        "claimedAt": ticket.get("claimed_at"),
-        "subject": ticket.get("subject"),
-        "location": tickets.ticket_location(guild, ticket),
-        "jumpUrl": tickets.ticket_jump_url(guild, ticket),
-        "threadId": _snowflake(ticket.get("thread_id")),
-        "createdAt": ticket.get("created_at"),
-        "closedAt": ticket.get("closed_at"),
-        "closedBy": _snowflake(ticket.get("closed_by")),
-        "closeReason": ticket.get("close_reason"),
-    }
-
-
 def _application_form_payload(form: dict, guild: discord.Guild) -> dict:
     """One application form, including the panel and review destinations."""
     accept_role = guild.get_role(int(form["accept_role_id"])) if form.get("accept_role_id") else None
@@ -2602,65 +1630,6 @@ def _application_payload(application: dict, guild: discord.Guild) -> dict:
             {"question": pair.get("question"), "answer": pair.get("answer")}
             for pair in application.get("answers") or []
         ],
-    }
-
-
-def _ruleset_payload(settings: dict, guild: discord.Guild) -> dict:
-    """Serialise a stored rule set for the browser (ids as strings)."""
-    try:
-        channel = guild.get_channel(int(settings.get("channel_id") or 0))
-    except (TypeError, ValueError):
-        channel = None
-    try:
-        role = guild.get_role(int(settings.get("role_id") or 0))
-    except (TypeError, ValueError):
-        role = None
-    return {
-        "rulesetId": ruleset_id(settings),
-        "name": ruleset_name(settings),
-        "channelId": _snowflake(settings.get("channel_id")),
-        "messageId": _snowflake(settings.get("message_id")),
-        "roleId": _snowflake(settings.get("role_id")),
-        "text": str(settings.get("rules_text") or ""),
-        # Resolved names make the post list readable even when the message was
-        # deleted or the channel/role was removed since publishing.
-        "channelName": getattr(channel, "name", None),
-        "roleName": getattr(role, "name", None),
-    }
-
-
-def _reaction_post_payload(post: dict) -> dict:
-    """Serialise a stored reaction-role post for the browser.
-
-    Every id crosses the wire as a string, for the same reason as elsewhere:
-    the browser rounds a 64-bit number and the rounded id then matches nothing.
-    """
-    entries = []
-    stored_entries = post.get("entries")
-    if isinstance(stored_entries, list):
-        for entry in stored_entries:
-            if not isinstance(entry, dict):
-                continue
-            entries.append(
-                {
-                    "emoji": str(entry.get("emoji") or ""),
-                    "roleId": _snowflake(entry.get("role_id")),
-                    # Always sent, defaulted for entries stored before the
-                    # Give/Remove option existed, so the editor always has a
-                    # value to show in its action dropdown.
-                    "action": entry_action(entry),
-                    "label": str(entry.get("label") or ""),
-                }
-            )
-    return {
-        "postId": str(post.get("post_id") or ""),
-        "channelId": _snowflake(post.get("channel_id")),
-        "messageId": _snowflake(post.get("message_id")),
-        "title": str(post.get("title") or ""),
-        "message": str(post.get("message") or ""),
-        "useEmbed": bool(post.get("use_embed", True)),
-        "removeOnUnreact": bool(post.get("remove_on_unreact", True)),
-        "entries": entries,
     }
 
 
