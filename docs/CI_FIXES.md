@@ -526,13 +526,49 @@ error instead of a verdict.
   no steps and no failing test; re-running the workflow (a fresh push, or
   **Re-run failed jobs** from the UI) is the fix.
 
+### 20. Open SQLite handles failed the Windows legs (WinError 32)
+
+Both Windows legs went red on "Run the test suite" while macOS and Linux
+stayed green, with the annotations from fix 19 naming four tests that all
+looked alike:
+
+```
+DropTicketsTableTests.test_a_database_that_never_had_tickets_reports_false
+PermissionError: [WinError 32] The process cannot access the file because it
+is being used by another process: '...\Temp\pm-cleanup-test-...\sentinel.db'
+```
+
+The tests were not failing; their *cleanup* was. `with sqlite3.connect(...) as
+conn:` commits the transaction on success, but the connection's context manager
+is a transaction, not a resource manager - it never closes the connection. Any
+code that relies on the connection being garbage collected instead leaks a file
+handle for an unpredictable moment. Linux and macOS unlink an open file quite
+happily, so the leak was invisible there; Windows refuses, and
+`TemporaryDirectory.cleanup()` raised while removing the test's database.
+
+- The four helpers in `tests/test_legacy_cleanup.py` now use
+  `contextlib.closing(sqlite3.connect(...))`, which is the convention `bot.py`,
+  `store.py` and `legacy_cleanup.py` already followed. The production code was
+  never part of the bug.
+- `tests/test_sqlite_handles.py` pins the property so it cannot come back
+  silently: it re-runs the database tests of `test_legacy_cleanup` with every
+  `sqlite3.connect()` traced and fails if any connection to a real *file* is
+  still open when its test finishes. Holding the reference is deliberate - it
+  removes the garbage-collection timing that made the original failure look
+  intermittent. In-memory connections are skipped: they own no file, so no
+  unlink can block on them.
+- Verified against the pre-fix test file (it reports the four leaked
+  `sentinel.db` handles) and against the fixed one (clean), without needing a
+  Windows run to tell the difference.
+
 ## Test gate in CI
 
 Every leg of `build.yml` and of the reusable `build-installers.yml` runs
 `python -m pytest tests`, which covers runtime path resolution (fixes 12 and
 14), the version plumbing (fix 13), the slash-command definitions (fix 15),
 the merge/tag release automation (fix 16), the per-architecture build plumbing
-(fix 17), the glibc floor (fix 18) and the test-failure annotations (fix 19).
+(fix 17), the glibc floor (fix 18), the test-failure annotations (fix 19) and
+closed database handles (fix 20).
 The suites are plain `unittest`, so they also run standalone:
 `python tests/test_paths.py`.
 
