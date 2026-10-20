@@ -27,6 +27,7 @@ import sqlite3
 import sys
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -254,7 +255,11 @@ class DropTicketsTableTests(unittest.TestCase):
         self.db_file = str(Path(self.home.name) / "sentinel.db")
 
     def _make_db(self, *, with_rows: bool = False) -> None:
-        with sqlite3.connect(self.db_file) as conn:
+        # ``closing()``, not a bare ``with sqlite3.connect(...)``: the
+        # connection's own context manager only commits, it does not close, and
+        # a leaked handle makes TemporaryDirectory.cleanup() fail on Windows
+        # (WinError 32) while unlinking happily on Linux and macOS.
+        with closing(sqlite3.connect(self.db_file)) as conn:
             conn.executescript(
                 """
                 CREATE TABLE tickets (
@@ -274,7 +279,7 @@ class DropTicketsTableTests(unittest.TestCase):
             conn.commit()
 
     def _names(self, kind: str) -> set[str]:
-        with sqlite3.connect(self.db_file) as conn:
+        with closing(sqlite3.connect(self.db_file)) as conn:
             return {
                 row[0]
                 for row in conn.execute(
@@ -301,7 +306,7 @@ class DropTicketsTableTests(unittest.TestCase):
         self.assertFalse(legacy_cleanup.drop_tickets_table(self.db_file))
 
     def test_a_database_that_never_had_tickets_reports_false(self) -> None:
-        with sqlite3.connect(self.db_file) as conn:
+        with closing(sqlite3.connect(self.db_file)) as conn:
             conn.execute("CREATE TABLE punishments (id INTEGER PRIMARY KEY)")
             conn.commit()
         self.assertFalse(legacy_cleanup.drop_tickets_table(self.db_file))
