@@ -89,7 +89,13 @@ def get_guild_config(cfg: dict, guild_id: int) -> Optional[dict]:
     # A guild entry wins over top-level defaults when that key was explicitly
     # saved (including an explicit null used to clear an optional setting).
     if per_guild is not None:
-        for key in ("staff_role_id", "staff_channel_id", "dm_user"):
+        for key in (
+            "staff_role_id",
+            "staff_channel_id",
+            "dm_user",
+            "honeypot_channel_ids",
+            "honeypot_action",
+        ):
             if key in per_guild:
                 result[key] = per_guild[key]
 
@@ -99,6 +105,8 @@ def get_guild_config(cfg: dict, guild_id: int) -> Optional[dict]:
         cfg.get("staff_channel_id") or cfg.get("log_channel_id"),
     )
     result.setdefault("dm_user", cfg.get("dm_user", True))
+    result.setdefault("honeypot_channel_ids", cfg.get("honeypot_channel_ids"))
+    result.setdefault("honeypot_action", cfg.get("honeypot_action"))
     return result
 
 
@@ -130,6 +138,53 @@ def should_dm_user(cfg: dict, guild_id: Optional[int] = None) -> bool:
     if guild_cfg is not None and "dm_user" in guild_cfg:
         return bool(guild_cfg["dm_user"])
     return bool(cfg.get("dm_user", True))
+
+
+# The honeypot (see honeypot.py) acts on members who post in a trap channel.
+# "punish" is the default because it is reversible: a human who wandered into
+# the wrong channel is held by the punish role for the default duration, while
+# a server expecting a raid can escalate to kick or ban.
+HONEYPOT_ACTIONS = ("punish", "kick", "ban")
+
+
+def get_honeypot_channels(cfg: dict, guild_id: Optional[int] = None) -> list[int]:
+    """The channel ids set as honeypot traps for a guild (deduplicated ints).
+
+    Per-guild entries win over the top-level default only when the key was
+    explicitly saved — so clearing a guild's list (an explicit ``[]``) does not
+    resurrect the top-level value. A guild the bot is not configured for gets
+    no traps at all: the top-level list must never arm channels in servers the
+    installer never set up.
+    """
+    if guild_id is None:
+        raw = cfg.get("honeypot_channel_ids")
+    else:
+        guild_cfg = get_guild_config(cfg, guild_id)
+        if guild_cfg is None:
+            return []
+        raw = guild_cfg.get("honeypot_channel_ids")
+    if isinstance(raw, (str, bytes)) or not hasattr(raw, "__iter__"):
+        return []
+    ids: list[int] = []
+    for value in raw:
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            continue
+        if number not in ids:
+            ids.append(number)
+    return ids
+
+
+def get_honeypot_action(cfg: dict, guild_id: Optional[int] = None) -> str:
+    """What happens to a member who posts in a honeypot: punish | kick | ban."""
+    if guild_id is None:
+        raw = cfg.get("honeypot_action")
+    else:
+        guild_cfg = get_guild_config(cfg, guild_id)
+        raw = guild_cfg.get("honeypot_action") if guild_cfg is not None else None
+    action = str(raw or "punish").strip().lower()
+    return action if action in HONEYPOT_ACTIONS else "punish"
 
 
 def moderation_denial(

@@ -1,9 +1,10 @@
 # Sentinel
 
 A cross-platform [discord.py](https://discordpy.readthedocs.io/) server
-management bot: timed punishment roles, warnings, application forms, and an
-authenticated server-side web dashboard for managing connected servers,
-moderation, warnings, applications, configuration and history.
+management bot: timed punishment roles, warnings, application forms, honeypot
+trap channels, and an authenticated server-side web dashboard for managing
+connected servers, moderation, warnings, applications, configuration and
+history.
 
 Everything is one slash-command tree, `/manage` — so a moderator can learn the
 whole bot by typing `/manage` and reading the list:
@@ -12,7 +13,7 @@ whole bot by typing `/manage` and reading the list:
 /manage punish        /manage warnings     /manage applications form
 /manage pardon        /manage status       /manage applications panel
 /manage warn          /manage setup        /manage applications review
-                                           /manage fixcommands
+/manage honeypot add  /manage honeypot list             /manage fixcommands
 ```
 
 **Moderation: the role flow**
@@ -614,6 +615,11 @@ Everything lives under `/manage`, plus the one member-facing command `/apply`.
 | `/manage applications view` | Staff                           | Shows one application's full answers and review controls by submission id. |
 | `/manage applications accept` | Staff                         | Approves one pending application by id, with an optional note. |
 | `/manage applications decide` | Staff                          | Approves or denies one submission by id, with an optional note. |
+| `/manage honeypot add`      | Server administrators           | Arms a channel as a honeypot trap. |
+| `/manage honeypot remove`   | Server administrators           | Disarms one channel. |
+| `/manage honeypot clear`    | Server administrators           | Disarms every honeypot in this server. |
+| `/manage honeypot action`   | Server administrators           | Chooses what a trap does: the punish role (default), a kick, or a ban. Call it bare to see the current value. |
+| `/manage honeypot list`     | Staff role (or administrators)  | Shows the armed channels, the action and the most recent triggers. |
 | `/manage setup`             | Server administrators           | Configures the punishment roles, staff channel, and DM behavior. |
 | `/manage fixcommands`       | Server administrators           | Removes duplicated slash commands (e.g. doubled `/manage` entries) and re-syncs this server. |
 | `/apply`                    | **Every member**                | Opens the application modal. It cannot list, view or edit anything. |
@@ -675,6 +681,46 @@ Protected members (admins, moderators, staff role holders, bots, and anyone
 above the bot's role) cannot be warned, and nobody can warn themselves.
 Warnings are DMed to the member and posted to the staff channel using the same
 `dm_user` / `staff_channel_id` settings as punishments.
+
+
+### Honeypot trap channels
+
+A honeypot is a channel that looks ordinary but is armed as a trap: the moment
+anyone posts in it, Sentinel deletes the message and acts on the poster
+automatically. Classic uses are a `#free-nitro`-style bait channel that raid
+bots and compromised accounts can't resist, or a `#mod-only` channel nobody
+legitimately writes in.
+
+```
+member posts in an armed channel ──▶ message deleted ──▶ automatic action ──▶ staff embed + record
+```
+
+* **Arm it:** `/manage honeypot add channel:#trap` (administrators). Remove
+  one channel with `/manage honeypot remove`, or all of them with
+  `/manage honeypot clear`. A server can arm at most 10 traps.
+* **Choose the action:** `/manage honeypot action` (administrators):
+  * `punish` *(default)* — the normal punish-role flow for the server's
+    default duration, so a human who wandered in is held, not nuked;
+  * `kick` — removed from the server;
+  * `ban` — banned outright.
+* **The message is always deleted** (best-effort), so the trap stays empty and
+  its content is preserved in the staff embed instead.
+* **Staff are immune.** Bots, webhooks, administrators, moderation-permission
+  holders, the configured staff role, and anyone at or above the bot's top
+  role are never acted on — staff can walk through a trap to check on it, and
+  their walkthroughs are not even recorded.
+* **Every trigger is recorded** in the database (user, channel, message
+  content, action), staff get a red embed in the staff channel, and
+  `/manage honeypot list` (staff) shows the armed channels plus the most
+  recent triggers.
+* `punish` reuses the punish/post-punish roles from `/manage setup`; if they
+  are not configured yet, traps only log triggers and the embed says so.
+  `punish` and `kick` DM the member when the server has `dm_user` on; a ban
+  does not.
+* Honours per-guild settings like everything else, so each connected server
+  arms its own traps. The honeypot is *reactive* (it acts when someone posts),
+  not a raid shield: it cannot stop a flood of messages elsewhere in the
+  server.
 
 
 ### Applications

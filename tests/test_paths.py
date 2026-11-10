@@ -70,6 +70,8 @@ class _Sandbox:
             "store.py", "settings.py",
             # Application system, imported by bot.py.
             "applications.py",
+            # Honeypot trap channels, imported by bot.py.
+            "honeypot.py",
         ):
             shutil.copy2(REPO_ROOT / name, self.bundle / name)
         if not app_writable:
@@ -197,6 +199,7 @@ class ReadOnlyAppDirTests(unittest.TestCase):
                 "installer.py", "command_tree.py", "duckdns.py",
                 "legacy_cleanup.py",
                 "store.py", "settings.py", "applications.py",
+                "honeypot.py",
                 "__pycache__",
             }
         )

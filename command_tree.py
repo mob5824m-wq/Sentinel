@@ -15,6 +15,9 @@ Everything the bot can do hangs off one top-level group, ``/manage``::
     /manage applications view    view one submission's answers (staff)
     /manage applications accept  approve one submission directly (staff)
     /manage applications decide  approve or deny one by id (staff)
+    /manage honeypot add/remove/clear  arm or disarm trap channels (admins)
+    /manage honeypot action    what a trap does: punish | kick | ban (admins)
+    /manage honeypot list      trap channels and recent triggers (staff)
     /apply              fill in an application form (every member)
 
 The group object lives in its own module because two places need it:
@@ -24,8 +27,8 @@ The group object lives in its own module because two places need it:
   ``Cog``);
 * a feature module can attach its own sub-group to it with
   ``parent=manage_group``, so its commands are defined next to the helpers they
-  use instead of being moved into bot.py. :mod:`applications` does exactly
-  that.
+  use instead of being moved into bot.py. :mod:`applications` and
+  :mod:`honeypot` do exactly that.
 
 Sub-command callbacks are bound to whichever cog owns the group, so the
 application commands are mixed into that same cog (see
