@@ -14,14 +14,18 @@ Everything is reached through one slash-command group, ``/manage``:
     /manage applications panel   publish an Apply panel (admins)
     /manage applications review  read submissions and decide (staff)
     /apply              fill in an application form (every member)
+    /manage honeypot add/remove/clear  arm or disarm trap channels (admins)
+    /manage honeypot action    what a trap does: punish | kick | ban (admins)
+    /manage honeypot list      trap channels and recent triggers (staff)
 
 Members submit applications through the buttons on panels staff published, or
 with that member command; they can never list, view or edit anybody's
 application. Moderation itself is staff-role-only: punish, pardon, warn,
 warnings and status all require the server's configured staff role
-(administrators also qualify), re-checked on every call. Its authenticated
-server-side web dashboard manages connected servers, moderation, warnings,
-applications, configuration and history.
+(administrators also qualify), re-checked on every call. Channels armed as
+honeypots act automatically on any non-protected member who posts in them. Its
+authenticated server-side web dashboard manages connected servers, moderation,
+warnings, applications, configuration and history.
 
 Rules posts, reaction-role menus and tickets used to live here too and have
 been removed. :mod:`legacy_cleanup` deletes the messages those features left
@@ -53,6 +57,7 @@ import command_tree
 import legacy_cleanup
 import store
 import duckdns
+import honeypot
 from dashboard import DashboardServer, ensure_dashboard_token
 from settings import (
     config_path,
@@ -69,6 +74,7 @@ from applications import (
     ApplicationsMixin,
     route_application_interaction,
 )
+from honeypot import HoneypotMixin
 
 
 # --------------------------------------------------------------------------- #
@@ -203,6 +209,25 @@ CREATE INDEX IF NOT EXISTS idx_applications_guild
     ON applications (guild_id, status, submitted_at DESC);
 CREATE INDEX IF NOT EXISTS idx_applications_user
     ON applications (guild_id, user_id, form_id);
+
+-- Honeypot triggers (see honeypot.py). Every time a member posts in a channel
+-- armed as a trap, the attempt is recorded here — including the ones whose
+-- action failed (missing roles, missing permissions), so staff can see that
+-- the trap fired even when nothing could be done about the member.
+CREATE TABLE IF NOT EXISTS honeypot_traps (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id     INTEGER NOT NULL,
+    user_id      INTEGER NOT NULL,
+    channel_id   INTEGER NOT NULL,
+    message_id   INTEGER,
+    content      TEXT,
+    action       TEXT NOT NULL,           -- punish|kick|ban (as attempted)
+    created_at   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_honeypot_traps_guild
+    ON honeypot_traps (guild_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_honeypot_traps_user
+    ON honeypot_traps (guild_id, user_id);
 """
 
 
@@ -430,6 +455,9 @@ DEFAULT_CONFIG: dict = {
     "duckdns_interval_minutes": 5,
     "default_duration_minutes": 30,
     "log_channel_id": None,
+    # --- honeypot (see honeypot.py) ---
+    "honeypot_channel_ids": [],      # trap channels; per-guild entries win
+    "honeypot_action": "punish",     # punish | kick | ban
 }
 
 
@@ -1311,15 +1339,17 @@ bot = SentinelBot(load_config())
 
 
 # ---- A single shared Cog holds all slash commands. --------------------- #
-class SentinelCog(ApplicationsMixin, commands.Cog):
+class SentinelCog(ApplicationsMixin, HoneypotMixin, commands.Cog):
     """Every slash command, under the shared ``/manage`` group.
 
-    It also mixes in :class:`applications.ApplicationsMixin`, because those
-    commands are children of the same group: a nested group is registered - and
-    its callbacks bound - by the cog that owns the top-level command, so they
-    cannot be cogs of their own. The mixin's helpers expect ``bot`` and
-    ``_save_config`` (it is normally constructed with them); this cog is the one
-    Discord sees.
+    It also mixes in :class:`applications.ApplicationsMixin` and
+    :class:`honeypot.HoneypotMixin`, because those commands are children of the
+    same group: a nested group is registered - and its callbacks bound - by the
+    cog that owns the top-level command, so they cannot be cogs of their own.
+    The mixins' helpers expect ``bot`` and ``_save_config`` (they are normally
+    constructed with them); this cog is the one Discord sees. The honeypot
+    mixin also contributes the ``on_message`` listener that watches the trap
+    channels.
 
     ``/apply`` is the exception: it is a *top-level* command, so it lives in
     :class:`applications.ApplicationsCog`.

@@ -16,5 +16,7 @@
   "dashboard_allowed_hosts": [],
   "dashboard_token": "",
   "default_duration_minutes": 30,
-  "log_channel_id": null
+  "log_channel_id": null,
+  "honeypot_channel_ids": [],
+  "honeypot_action": "punish"
 }

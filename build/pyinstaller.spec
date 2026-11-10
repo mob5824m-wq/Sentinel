@@ -166,6 +166,8 @@ a = Analysis(
         'settings',
         # Application forms, panels and decisions.
         'applications',
+        # Honeypot trap channels.
+        'honeypot',
         # installer.py is bundled as a data file; import it via importlib.
     ],
     hookspath=[],
